@@ -1,5 +1,5 @@
 # Set executable name and dependencies
-EXEC = module1_test
+EXEC = lib_test
 
 # ------------ CALCOLO DELLE DIPENDENZE ------------
 
