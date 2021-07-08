@@ -31,6 +31,9 @@ OBJS = $(patsubst %.c,%.o,$(SRCS))
 OBJS_ABSPATH = $(addprefix $(BUILD)/$(MODULE_NAME)/,$(OBJS))
 EXEC_ABSPATH = $(BUILD)/$(MODULE_NAME)/bin/$(EXEC)
 
+# Genero path relativa per gli include file del modulo
+INCLUDE_REL = $(shell realpath --relative-to . $(INCLUDE))
+
 # ------------ DEFINIZIONE DELLE RECIPES ------------
 
 .PHONY: all clean
@@ -38,7 +41,7 @@ EXEC_ABSPATH = $(BUILD)/$(MODULE_NAME)/bin/$(EXEC)
 all: $(EXEC_ABSPATH)
 
 depend:
-	makedepend -I $(INCLUDE) $(SRCS)
+	makedepend -I $(INCLUDE_REL) $(SRCS)
 	for dir in $(SUBDIRS); do \
 		$(MAKE) -C $$dir $@; \
 	done
@@ -90,4 +93,4 @@ main.o: /usr/include/bits/thread-shared-types.h
 main.o: /usr/include/bits/pthreadtypes-arch.h
 main.o: /usr/include/bits/struct_mutex.h /usr/include/bits/struct_rwlock.h
 main.o: /usr/include/alloca.h /usr/include/bits/stdlib-float.h
-main.o: /home/armando/git/SysProgG3/include/lib/lib.h
+main.o: ../../include/lib/lib.h
