@@ -1,0 +1,66 @@
+# Set executable name and dependencies
+EXEC = program
+
+# ------------ CALCOLO DELLE DIPENDENZE ------------
+
+# Prendo gli include in ogni source file
+SRCS=$(shell find *.c 2>/dev/null)
+MY_INCLUDES = \
+	$(foreach src, $(SRCS), \
+		$(filter $(INCLUDE)%,$(shell $(CC) -I $(INCLUDE) -M $(src)))\
+	 )
+
+# Trasformo gli include in moduli di dipendenza 
+DEPS = $(dir $(patsubst $(INCLUDE)%,%,$(MY_INCLUDES)))
+
+# Genero le path assolute dei relativi file oggetto
+DEPS_ABSPATH = \
+	$(foreach dep,$(DEPS), \
+		$(patsubst $(SRC)%.c,$(BUILD)%.o,$(shell find $(SRC)$(dep)*.c)) \
+	 )
+
+# ------------ GENERAZIONE PATH ASSOLUTE ------------
+
+# Recupero il nome del modulo in analisi
+MODULE_NAME = $(notdir $(shell pwd))
+
+# Genero i nomi dei file oggetto
+OBJS = $(patsubst %.c,%.o,$(SRCS))
+
+# Genero le path assolute degli object file e dell'eseguibile
+OBJS_ABSPATH = $(addprefix $(BUILD)/$(MODULE_NAME)/,$(OBJS))
+EXEC_ABSPATH = $(BUILD)/$(MODULE_NAME)/bin/$(EXEC)
+
+# ------------ DEFINIZIONE DELLE RECIPES ------------
+
+.PHONY: all clean
+
+all: $(EXEC_ABSPATH)
+
+depend:
+	makedepend -I $(INCLUDE) $(SRCS)
+	for dir in $(SUBDIRS); do \
+		$(MAKE) -C $$dir $@; \
+	done
+
+# Recipe per l'eseguibile
+$(EXEC_ABSPATH): $(OBJS_ABSPATH) $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $^
+
+# Gestione delle dipendenze
+$(DEPS_ABSPATH):
+	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D))
+
+# Recipe per gli object files
+$(BUILD)/$(MODULE_NAME)/%.o: %.c
+	-mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -I$(INCLUDE) -c -o $@ $(notdir $(basename $@)).c
+
+clean: 
+	rm -f *~ *.bak $(BUILD)/$(MODULE_NAME)/*.o $(EXEC_ABSPATH)
+
+# DO NOT DELETE
+
+main.o: /usr/include/stdio.h /usr/include/stdlib.h
+main.o: /home/armando/Templates/c_project_template/include/lib/lib.h
