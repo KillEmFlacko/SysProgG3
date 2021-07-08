@@ -32,4 +32,4 @@ clean:
 
 # DO NOT DELETE
 
-lib.o: /home/armando/Templates/c_project_template/include/lib/lib.h
+lib.o: /home/armando/git/SysProgG3/include/lib/lib.h

@@ -14,10 +14,10 @@ export BUILD=$(BASEDIR)/build
 SUBDIRS = src include test
 
 # Tells make that those are arbitrary names used as targets
-.PHONY : all clean test doc
+.PHONY : all clean test doc depend
 
 # Complete build recipe
-all depend:
+all depend: depend
 	for dir in $(SUBDIRS); do \
 		$(MAKE) -C $$dir $@; \
 	done
