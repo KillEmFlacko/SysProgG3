@@ -6,4 +6,5 @@ doc
 *.bak
 *.zip
 *.old
+.*
 compile_commands.json

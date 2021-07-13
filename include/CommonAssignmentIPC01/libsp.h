@@ -1,3 +1,8 @@
+#ifndef _LIBSP_H
+#define _LIBSP_H
+
+#include <sys/types.h>
+
 #define MAX_MSGQUEUE_LEN 128
 
 /* Message struct  :
@@ -83,3 +88,4 @@ void remove_monitor(Monitor *mon);
 	   cond_num : number of condition variable*/
 int IS_queue_empty(Monitor *mon,int cond_num);
 
+#endif

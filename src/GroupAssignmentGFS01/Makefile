@@ -1,6 +1,9 @@
 # Set executable name and dependencies
 EXEC = program
 
+# Recupero il nome del modulo in analisi
+MODULE_NAME = $(notdir $(shell pwd))
+
 # ------------ CALCOLO DELLE DIPENDENZE ------------
 
 # Prendo gli include in ogni source file
@@ -11,7 +14,7 @@ MY_INCLUDES = \
 	 )
 
 # Trasformo gli include in moduli di dipendenza 
-DEPS = $(dir $(patsubst $(INCLUDE)%,%,$(MY_INCLUDES)))
+DEPS = $(filter-out /$(MODULE_NAME)/, $(dir $(patsubst $(INCLUDE)%,%,$(MY_INCLUDES))))
 
 # Genero le path assolute dei relativi file oggetto
 DEPS_ABSPATH = \
@@ -20,9 +23,6 @@ DEPS_ABSPATH = \
 	 )
 
 # ------------ GENERAZIONE PATH ASSOLUTE ------------
-
-# Recupero il nome del modulo in analisi
-MODULE_NAME = $(notdir $(shell pwd))
 
 # Genero i nomi dei file oggetto
 OBJS = $(patsubst %.c,%.o,$(SRCS))
@@ -41,7 +41,7 @@ INCLUDE_REL = $(shell realpath --relative-to . $(INCLUDE))
 all: $(EXEC_ABSPATH)
 
 depend:
-	makedepend -I $(INCLUDE_REL) $(SRCS)
+	makedepend -I $(INCLUDE_REL) $(SRCS) -Y /usr/include
 	for dir in $(SUBDIRS); do \
 		$(MAKE) -C $$dir $@; \
 	done
@@ -65,32 +65,4 @@ clean:
 
 # DO NOT DELETE
 
-main.o: /usr/include/stdio.h /usr/include/bits/libc-header-start.h
-main.o: /usr/include/features.h /usr/include/stdc-predef.h
-main.o: /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h
-main.o: /usr/include/bits/long-double.h /usr/include/gnu/stubs.h
-main.o: /usr/include/bits/types.h /usr/include/bits/timesize.h
-main.o: /usr/include/bits/typesizes.h /usr/include/bits/time64.h
-main.o: /usr/include/bits/types/__fpos_t.h
-main.o: /usr/include/bits/types/__mbstate_t.h
-main.o: /usr/include/bits/types/__fpos64_t.h /usr/include/bits/types/__FILE.h
-main.o: /usr/include/bits/types/FILE.h /usr/include/bits/types/struct_FILE.h
-main.o: /usr/include/bits/stdio_lim.h /usr/include/bits/floatn.h
-main.o: /usr/include/bits/floatn-common.h /usr/include/stdlib.h
-main.o: /usr/include/bits/waitflags.h /usr/include/bits/waitstatus.h
-main.o: /usr/include/sys/types.h /usr/include/bits/types/clock_t.h
-main.o: /usr/include/bits/types/clockid_t.h /usr/include/bits/types/time_t.h
-main.o: /usr/include/bits/types/timer_t.h /usr/include/bits/stdint-intn.h
-main.o: /usr/include/endian.h /usr/include/bits/endian.h
-main.o: /usr/include/bits/endianness.h /usr/include/bits/byteswap.h
-main.o: /usr/include/bits/uintn-identity.h /usr/include/sys/select.h
-main.o: /usr/include/bits/select.h /usr/include/bits/types/sigset_t.h
-main.o: /usr/include/bits/types/__sigset_t.h
-main.o: /usr/include/bits/types/struct_timeval.h
-main.o: /usr/include/bits/types/struct_timespec.h
-main.o: /usr/include/bits/pthreadtypes.h
-main.o: /usr/include/bits/thread-shared-types.h
-main.o: /usr/include/bits/pthreadtypes-arch.h
-main.o: /usr/include/bits/struct_mutex.h /usr/include/bits/struct_rwlock.h
-main.o: /usr/include/alloca.h /usr/include/bits/stdlib-float.h
 main.o: ../../include/lib/lib.h

@@ -1,5 +1,5 @@
 # Flags and compiler
-DEBUG = -g
+DEBUG = 
 export CFLAGS = -Wall $(DEBUG)
 export LFLAGS = -Wall $(DEBUG)
 export CC = gcc
@@ -17,7 +17,7 @@ SUBDIRS = src include test
 .PHONY : all clean test doc depend
 
 # Complete build recipe
-all depend: depend
+all depend:
 	for dir in $(SUBDIRS); do \
 		$(MAKE) -C $$dir $@; \
 	done
