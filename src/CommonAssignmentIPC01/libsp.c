@@ -47,36 +47,26 @@
 /* Request a shared memory */
 int get_shm (key_t *chiave, char **ptr_shared, int dim)
 {
+	int shmid;
+
 	// Check if the segment exists
-	if ((*ptr_shared = shmget(*chiave, dim, 0)) == -1) 
+	if ((shmid = shmget(*chiave, dim, 0)) == -1)
 	{
 		// It does not exist... Creation of the shared memory
-		if ((*ptr_shared = shmget(*chiave, dim, IPC_CREAT | IPC_EXCL)) != -1)
+		if ((shmid = shmget(*chiave, dim, IPC_CREAT | IPC_EXCL)) != -1)
 		{
+			*ptr_shared = shmat(shmid, (void *) 0, 0);
+			if (**ptr_shared == (char *)(-1)) 
+			{
+				perror("shmat");
+				return -1;
+			}
 			return 0;
 		}
 		// In case of error check the value of errno
-		else if (errno == EEXIST) 
-		{
-			if ((*ptr_shared = shmget(*chiave, dim, 0)) == -1)
-			{
-				perror("shmget error: the key already exists"); 
-				return -1;
-			}
-		}
-		else if (errno == EACCES) 
-		{
-			perror("shmget error: the user does not have permission to access the shared memory segment"); 
-			return -1;
-		}
-		else if (errno == EINVAL) 
-		{
-			perror("shmget error: problem with the size of the segment"); 
-			return -1;
-		}
 		else
 		{
-			perror("shmget error");
+			perror("shmget");
 			return -1;
 		}
 	}
