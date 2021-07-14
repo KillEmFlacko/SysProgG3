@@ -36,37 +36,29 @@
 #include <asm-generic/errno.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
-#include <errno.h>
-#include <stdio.h>
-<<<<<<< HEAD
-#include <stdlib.h>
-#include <sys/shm.h>
-#include <sys/sem.h>
 #include <sys/stat.h>
-#include <sys/types.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
-=======
->>>>>>> 4ade1b6fe114ca753dd8860758d003464c7e3623
 #include "CommonAssignmentIPC01/libsp.h"
 
 #define ERRMSG_MAX_LEN 128
 
 /* Request a shared memory */
-<<<<<<< HEAD
 int get_shm (key_t *chiave, char **ptr_shared, int dim)
 {
 	// Check if the segment exists
-	if ((ptr_shared = shmget(chiave, dim, 0)) == -1) 
+	if ((*ptr_shared = shmget(*chiave, dim, 0)) == -1) 
 	{
 		// It does not exist... Creation of the shared memory
-		if ((ptr_shared = shmget(chiave, dim, IPC_CREAT | IPC_EXCL)) != -1)
+		if ((*ptr_shared = shmget(*chiave, dim, IPC_CREAT | IPC_EXCL)) != -1)
 		{
 			return 0;
 		}
 		// In case of error check the value of errno
 		else if (errno == EEXIST) 
 		{
-			if ((ptr_shared = shmget(chiave, dim, 0)) == -1)
+			if ((*ptr_shared = shmget(*chiave, dim, 0)) == -1)
 			{
 				perror("shmget error: the key already exists"); 
 				return -1;
@@ -99,10 +91,10 @@ int get_sem (key_t *chiave_sem, int numsem, int initsem)
 	struct sembuf sbuf;
 
 	// Check if the semaphore exists
-	if ((semid = semget(chiave_sem, 0, 0)) == -1) 
+	if ((semid = semget(*chiave_sem, 0, 0)) == -1) 
 	{
 		// It does not exist... Creation of the semaphore
-		if ((semid = semget(chiave_sem, 1, IPC_CREAT | IPC_EXCL | S_IRUSR |
+		if ((semid = semget(*chiave_sem, 1, IPC_CREAT | IPC_EXCL | S_IRUSR |
 			S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) != -1)
 		{
 			sbuf.sem_num = numsem;
@@ -118,7 +110,7 @@ int get_sem (key_t *chiave_sem, int numsem, int initsem)
 		// In case of error check the value of errno
 		else if (errno == EEXIST) 
 		{
-			if ((semid = semget(chiave_sem, 0, 0)) == -1)
+			if ((semid = semget(*chiave_sem, 0, 0)) == -1)
 			{
 				perror("semget error: the key already exists"); 
 				return -1;
@@ -153,11 +145,11 @@ void wait_sem (int id_sem, int numsem, int flag)
 	sbuf.sem_op = -1;
 	sbuf.sem_flg = flag;
 
-	if (semop(mysem, &sbuf, 1) == -1)
+	if (semop(id_sem, &sbuf, 1) == -1)
 	{
 		if (errno == EACCES)
 		{
-			perror("semop error: the calling process does not have the permissions required
+			perror("semop error: the calling process does not have the permissions required \
               to perform the specified semaphore operations"); 
 			exit(EXIT_FAILURE);
 		}
@@ -177,27 +169,6 @@ void wait_sem (int id_sem, int numsem, int flag)
 			exit(EXIT_FAILURE);
 		}
 	}
-}
-
-/* signal on the semaphore */
-void signal_sem (int id_sem, int numsem, int flag);
-/* remove a shared memory */
-void remove_shm (int id_shared);
-/* remove a shared memory */
-void remove_sem (int id_sem);
-=======
-int get_shm (key_t *chiave, char **ptr_shared, int dim){
-	return 0;
-}
-
-/* Request a semaphore */
-int get_sem (key_t *chiave_sem, int numsem, int initsem){
-	return 0;
-}
-
-/* wait on the semaphore */
-void wait_sem (int id_sem, int numsem, int flag){
-	return;
 }
 
 /** @brief Signal on a semaphore
@@ -264,7 +235,6 @@ void remove_sem (int id_sem) {
 	}
 }
 
->>>>>>> 4ade1b6fe114ca753dd8860758d003464c7e3623
 /* async send on a message queue*/
 void send_asyn(int msg_qid, Message *PTR_mess, int send_flag){
 	return;
@@ -286,8 +256,9 @@ void receive_sync(int msg_qid, Message *messaggio, int flag){
 }
 
 /* remove a mailbox */
-<<<<<<< HEAD
-void remove_mailbox(int msg_qid);
+void remove_mailbox(int msg_qid){
+	return;
+}
 
 Monitor *init_monitor(int ncond);	/*init  monitor :
 					inputs : numcond  to init;
@@ -321,8 +292,3 @@ void remove_monitor(Monitor *mon);
 /*inputs : Monitor *mon : 
 	   cond_num : number of condition variable*/
 int IS_queue_empty(Monitor *mon,int cond_num);
-=======
-void remove_mailbox(int msg_qid){
-	return;
-}
->>>>>>> 4ade1b6fe114ca753dd8860758d003464c7e3623
