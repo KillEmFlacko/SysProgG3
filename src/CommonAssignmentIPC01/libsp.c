@@ -44,44 +44,52 @@
 
 #define ERRMSG_MAX_LEN 128
 
-/* Request a shared memory */
+/** @brief Request a shared memory area and attach to process address space
+ *
+ * @param chiave key of the shared memory
+ * @param ptr_shared if all OK points to the start of shared memory area
+ * @param dim dimension in byte of the shared memory area (if created)
+ * @retval shared memory ID if OK, -1 on error
+ */
 int get_shm (key_t *chiave, char **ptr_shared, int dim)
 {
+	int shmid;
+	void *area;
+	char error_string[ERRMSG_MAX_LEN];
+
 	// Check if the segment exists
-	if ((*ptr_shared = shmget(*chiave, dim, 0)) == -1)
+	if ((shmid = shmget(*chiave, 0, 0)) == -1)
 	{
-		// It does not exist... Creation of the shared memory
-		if ((*ptr_shared = shmget(*chiave, dim, IPC_CREAT | IPC_EXCL)) != -1)
-		{
-			return 0;
-		}
-		// In case of error check the value of errno
-		else if (errno == EEXIST)
-		{
-			if ((*ptr_shared = shmget(*chiave, dim, 0)) == -1)
+		if(errno == ENOENT){
+			// It does not exist... Creation of the shared memory
+			if ((shmid = shmget(*chiave, dim, IPC_CREAT | IPC_EXCL)) == -1)
 			{
-				perror("shmget error: the key already exists");
+				snprintf(error_string,ERRMSG_MAX_LEN,"get_shm(chiave: %p, ptr_shared: %p, dim: %d) - Cannot create shared memory",chiave,ptr_shared,dim);
+				perror(error_string);
 				return -1;
 			}
-		}
-		else if (errno == EACCES)
-		{
-			perror("shmget error: the user does not have permission to access the shared memory segment");
-			return -1;
-		}
-		else if (errno == EINVAL)
-		{
-			perror("shmget error: problem with the size of the segment");
-			return -1;
-		}
-		else
-		{
-			perror("shmget error");
+		} else {
+			/*
+			 * Something unexpected happened 
+			 */
+			snprintf(error_string,ERRMSG_MAX_LEN,"get_shm(chiave: %p, ptr_shared: %p, dim: %d) - Cannot create shared memory",chiave,ptr_shared,dim);
+			perror(error_string);
 			return -1;
 		}
 	}
 
-	return -1;
+	/*
+	 * Attach shared memory area to process address space
+	 */
+	if ((area = shmat(shmid, (void *) 0, 0)) == (void *)(-1)) 
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"get_shm(chiave: %p, ptr_shared: %p, dim: %d) - Cannot create shared memory",chiave,ptr_shared,dim);
+		perror(error_string);
+		return -1;
+	}
+	
+	*ptr_shared = (char*)area;
+	return shmid;
 }
 
 /** @brief Request a semaphore.
@@ -91,7 +99,7 @@ int get_shm (key_t *chiave, char **ptr_shared, int dim)
  * @param chiave_sem key of the semaphore set
  * @param numsem number of semaphores in the set
  * @param initsem initial value of each new semaphore
- * @return the semaphore ID if OK, -1 on error
+ * @retval the semaphore ID if OK, -1 on error
  */
 int get_sem (key_t *chiave_sem, int numsem, int initsem)
 {
@@ -107,7 +115,8 @@ int get_sem (key_t *chiave_sem, int numsem, int initsem)
 			 * create a new semaphore set
 			 */
 			if ((semid = semget(*chiave_sem, numsem, IPC_CREAT | IPC_EXCL | SEMPERM)) == -1){
-				snprintf(error_string,ERRMSG_MAX_LEN,"get_sem(chiave_sem: %p,numsem: %d,initsem: %d) - Cannot lock resources",chiave_sem,numsem,initsem);
+				snprintf(error_string,ERRMSG_MAX_LEN,"get_sem(chiave_sem: %p,numsem: %d,initsem: %d) - \
+						Cannot create semaphore set",chiave_sem,numsem,initsem);
 				perror(error_string);
 				return -1;
 			}
@@ -115,7 +124,8 @@ int get_sem (key_t *chiave_sem, int numsem, int initsem)
 			/*
 			 * Semaphore set exists but something went wrong
 			 */
-			snprintf(error_string,ERRMSG_MAX_LEN,"get_sem(chiave_sem: %p,numsem: %d,initsem: %d) - Cannot lock resources",chiave_sem,numsem,initsem);
+			snprintf(error_string,ERRMSG_MAX_LEN,"get_sem(chiave_sem: %p,numsem: %d,initsem: %d) - \
+					Cannot create semaphore set",chiave_sem,numsem,initsem);
 			perror(error_string);
 			return -1;
 
@@ -137,7 +147,8 @@ int get_sem (key_t *chiave_sem, int numsem, int initsem)
 	 */
 	int status = 0;
 	if ((status = semop(semid, sbuf, numsem)) == -1) {
-		snprintf(error_string,ERRMSG_MAX_LEN,"get_sem(chiave_sem: %p,numsem: %d,initsem: %d) - Cannot lock resources",chiave_sem,numsem,initsem);
+		snprintf(error_string,ERRMSG_MAX_LEN,"get_sem(chiave_sem: %p,numsem: %d,initsem: %d) - \
+				Cannot create semaphore set",chiave_sem,numsem,initsem);
 		perror(error_string);
 		return -1;
 	}
