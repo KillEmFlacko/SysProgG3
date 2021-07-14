@@ -48,7 +48,7 @@
 int get_shm (key_t *chiave, char **ptr_shared, int dim)
 {
 	// Check if the segment exists
-	if ((*ptr_shared = shmget(*chiave, dim, 0)) == -1) 
+	if ((*ptr_shared = shmget(*chiave, dim, 0)) == -1)
 	{
 		// It does not exist... Creation of the shared memory
 		if ((*ptr_shared = shmget(*chiave, dim, IPC_CREAT | IPC_EXCL)) != -1)
@@ -56,22 +56,22 @@ int get_shm (key_t *chiave, char **ptr_shared, int dim)
 			return 0;
 		}
 		// In case of error check the value of errno
-		else if (errno == EEXIST) 
+		else if (errno == EEXIST)
 		{
 			if ((*ptr_shared = shmget(*chiave, dim, 0)) == -1)
 			{
-				perror("shmget error: the key already exists"); 
+				perror("shmget error: the key already exists");
 				return -1;
 			}
 		}
-		else if (errno == EACCES) 
+		else if (errno == EACCES)
 		{
-			perror("shmget error: the user does not have permission to access the shared memory segment"); 
+			perror("shmget error: the user does not have permission to access the shared memory segment");
 			return -1;
 		}
-		else if (errno == EINVAL) 
+		else if (errno == EINVAL)
 		{
-			perror("shmget error: problem with the size of the segment"); 
+			perror("shmget error: problem with the size of the segment");
 			return -1;
 		}
 		else
@@ -80,94 +80,96 @@ int get_shm (key_t *chiave, char **ptr_shared, int dim)
 			return -1;
 		}
 	}
-	
+
 	return -1;
 }
 
-/* Request a semaphore */
+/** @brief Request a semaphore.
+ * If the semaphore already exists for the provided key numsem and
+ * initsem are ignored.
+ *
+ * @param chiave_sem key of the semaphore set
+ * @param numsem number of semaphores in the set
+ * @param initsem initial value of each new semaphore
+ * @return the semaphore ID if OK, -1 on error
+ */
 int get_sem (key_t *chiave_sem, int numsem, int initsem)
 {
 	int semid;
-	struct sembuf sbuf;
+	char error_string[ERRMSG_MAX_LEN];
 
 	// Check if the semaphore exists
-	if ((semid = semget(*chiave_sem, 0, 0)) == -1) 
+	if ((semid = semget(*chiave_sem, 0, 0)) == -1)
 	{
-		// It does not exist... Creation of the semaphore
-		if ((semid = semget(*chiave_sem, 1, IPC_CREAT | IPC_EXCL | S_IRUSR |
-			S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) != -1)
-		{
-			sbuf.sem_num = numsem;
-			sbuf.sem_op = initsem;
-			sbuf.sem_flg = 0;
+		if(errno == ENOENT) {
+			/*
+			 * If the semaphore set does not exist
+			 * create a new semaphore set
+			 */
+			if ((semid = semget(*chiave_sem, numsem, IPC_CREAT | IPC_EXCL | SEMPERM)) == -1){
+				snprintf(error_string,ERRMSG_MAX_LEN,"get_sem(chiave_sem: %p,numsem: %d,initsem: %d) - Cannot lock resources",chiave_sem,numsem,initsem);
+				perror(error_string);
+				return -1;
+			}
+		} else {
+			/*
+			 * Semaphore set exists but something went wrong
+			 */
+			snprintf(error_string,ERRMSG_MAX_LEN,"get_sem(chiave_sem: %p,numsem: %d,initsem: %d) - Cannot lock resources",chiave_sem,numsem,initsem);
+			perror(error_string);
+			return -1;
 
-			if (semop(semid, &sbuf, 1) == -1) 
-			{
-				perror("semop error");
-				return -1;
-			}
 		}
-		// In case of error check the value of errno
-		else if (errno == EEXIST) 
-		{
-			if ((semid = semget(*chiave_sem, 0, 0)) == -1)
-			{
-				perror("semget error: the key already exists"); 
-				return -1;
-			}
-		}
-		else if (errno == EACCES) 
-		{
-			perror("semget error: the user does not have permission to access the set"); 
-			return -1;
-		}
-		else if (errno == EINVAL) 
-		{
-			perror("semget error: problem with the number of semaphores of the set");
-			return -1;
-		}
-		else 
-		{
-			perror("semget error");
-			return -1;
-		}
+	}
+
+	/*
+	 * Load the array for semaphore set initialization
+	 */
+	struct sembuf *sbuf = (struct sembuf*)malloc(sizeof(struct sembuf) * numsem);
+	for(int i = 0; i < numsem; i++){
+		sbuf[i].sem_num = numsem;
+		sbuf[i].sem_op = initsem;
+		sbuf[i].sem_flg = 0;
+	}
+
+	/*
+	 * Perform semaphore set initialization
+	 */
+	int status = 0;
+	if ((status = semop(semid, sbuf, numsem)) == -1) {
+		snprintf(error_string,ERRMSG_MAX_LEN,"get_sem(chiave_sem: %p,numsem: %d,initsem: %d) - Cannot lock resources",chiave_sem,numsem,initsem);
+		perror(error_string);
+		return -1;
 	}
 
 	return semid;
 }
 
-/* wait on the semaphore */
+/** @brief Wait on the semaphore
+ *
+ * @param id_sem semaphore set ID
+ * @param numsem index of the semaphore to call wait on (from 0 to sem_nsems-1)
+ * @param flag operation flags (IPC_NOWAIT, SEM_UNDO)
+ */
 void wait_sem (int id_sem, int numsem, int flag)
 {
+	int status = 0;
+	char error_string[ERRMSG_MAX_LEN];
 	struct sembuf sbuf;
 
 	sbuf.sem_num = numsem;
 	sbuf.sem_op = -1;
 	sbuf.sem_flg = flag;
 
-	if (semop(id_sem, &sbuf, 1) == -1)
+	while((status = semop(id_sem, &sbuf, 1)) == -1 && errno == EINTR);
+
+	if(status == -1)
 	{
-		if (errno == EACCES)
-		{
-			perror("semop error: the calling process does not have the permissions required \
-              to perform the specified semaphore operations"); 
-			exit(EXIT_FAILURE);
-		}
-		else if (errno == EINVAL)
-		{
-			perror("semop error: the semaphore set doesn't exist"); 
-			exit(EXIT_FAILURE);
-		}
-		else if (errno == EAGAIN)
-		{
-			perror("semop error: the operation could not proceed immediately"); 
-			exit(EXIT_FAILURE);
-		}
-		else
-		{
-			perror("semop error"); 
-			exit(EXIT_FAILURE);
-		}
+		/*
+		 * TODO: Maybe you should specify the error type cheking errno
+		 */
+		snprintf(error_string,ERRMSG_MAX_LEN,"wait_sem(id_sem: %d,numsem: %d,flag: %d) - Cannot lock resources",id_sem,numsem,flag);
+		perror(error_string);
 	}
 }
 
@@ -175,7 +177,7 @@ void wait_sem (int id_sem, int numsem, int flag)
  *
  * @param id_sem semaphore set ID
  * @param numsem index of the semaphore to signal (from 0 to sem_nsems-1)
- * @param flag operation flags ( IPC_NOWAIT, SEM_UNDO)
+ * @param flag operation flags (IPC_NOWAIT, SEM_UNDO)
  */
 void signal_sem (int id_sem, int numsem, int flag){
 	int status = 0;
@@ -261,25 +263,25 @@ void remove_mailbox(int msg_qid){
 }
 
 Monitor *init_monitor(int ncond);	/*init  monitor :
-					inputs : numcond  to init;
-					outputs: Monitor *: */
+inputs : numcond  to init;
+outputs: Monitor *: */
 
 
 /*Routine enter_monitor .
-	inputs : Monitor * mon ;
-	waits on mutex*/
+inputs : Monitor * mon ;
+waits on mutex*/
 
 void enter_monitor(Monitor *mon);
 
 /*Routine leave_monitor  :
-	inputs: Monitor *mon ;
-	mutex.signal()*/
+inputs: Monitor *mon ;
+mutex.signal()*/
 
 void leave_monitor(Monitor *mon);
 
 /* Routine wait_cond  / signal_cond:.
-	inputs : Monitor *mon :  ;
-                 cond_num : index of the condition var */
+inputs : Monitor *mon :  ;
+cond_num : index of the condition var */
 
 void wait_cond(Monitor *mon,int cond_num);
 
@@ -289,6 +291,6 @@ void signal_cond(Monitor *mon,int cond_num);
 void remove_monitor(Monitor *mon);
 
 /*Routine IS_queue_empty : returns 1 if the condition variable queue is empty, 0 otherwise*/
-/*inputs : Monitor *mon : 
-	   cond_num : number of condition variable*/
+/*inputs : Monitor *mon :
+cond_num : number of condition variable*/
 int IS_queue_empty(Monitor *mon,int cond_num);

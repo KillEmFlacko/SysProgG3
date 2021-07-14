@@ -34,6 +34,7 @@
 #include <sys/types.h>
 
 #define MAX_MSGQUEUE_LEN 128
+#define SEMPERM 0600
 
 /* Message struct  :
    - type: Represents the type of the message
