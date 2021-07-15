@@ -53,7 +53,7 @@ $(DEPS_ABSPATH):
 	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D))
 
 # Recipe per gli object files
-$(BUILD)/$(MODULE_NAME)/%.o: %.c
+$(BUILD)/$(MODULE_NAME)/%.o: %.c $(MY_INCLUDES)
 	-mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -I$(INCLUDE) -c -o $@ $(notdir $(basename $@)).c
 
