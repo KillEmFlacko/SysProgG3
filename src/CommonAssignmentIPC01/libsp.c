@@ -6,7 +6,7 @@
  * Francesco	Moscato	fmoscato@unisa.it
  *
  * Group:
- * D'Alessio	Simone
+ * D'Alessio	Simone		0622701120	s.dalessio8@studenti.unisa.it
  * Falanga		Armando		0622701140  a.falanga13@studenti.unisa.it
  * Fattore		Alessandro
  *
@@ -62,7 +62,7 @@ int get_shm (key_t *chiave, char **ptr_shared, int dim)
 	{
 		if(errno == ENOENT){
 			// It does not exist... Creation of the shared memory
-			if ((shmid = shmget(*chiave, dim, IPC_CREAT | IPC_EXCL)) == -1)
+			if ((shmid = shmget(*chiave, dim, IPC_CREAT | IPC_EXCL | SEMPERM)) == -1)
 			{
 				snprintf(error_string,ERRMSG_MAX_LEN,"get_shm(chiave: %p, ptr_shared: %p, dim: %d) - Cannot create shared memory",chiave,ptr_shared,dim);
 				perror(error_string);

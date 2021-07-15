@@ -6,7 +6,7 @@
  * Francesco	Moscato	fmoscato@unisa.it
  *
  * Group:
- * D'Alessio	Simone
+ * D'Alessio	Simone		0622701120	s.dalessio8@studenti.unisa.it
  * Falanga		Armando		0622701140  a.falanga13@studenti.unisa.it
  * Fattore		Alessandro
  *
@@ -32,7 +32,11 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <libgen.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/ipc.h>
 #include "lib/lib.h"
+#include "CommonAssignmentIPC01/libsp.h"
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -45,7 +49,33 @@
 #define FAILURE_MESSAGE ANSI_COLOR_RED"Test FAILED"ANSI_COLOR_RESET
 
 int main(int argc, char **argv){
-	assert(add(1,2) == 3);
+
+	key_t key;
+	int shmid;
+
+	if ((key = ftok(".", 100)) == -1) { perror("ftok"); exit(1); }
+
+	if (fork() == 0) {
+
+		char** shm1;
+		
+		assert((shmid = get_shm(&key, shm1, 128)) != -1);
+		//remove_shm(shmid);
+
+		return 0;
+
+	}
+	else {
+
+		wait(NULL);
+
+		char** shm2;
+		
+		//assert((shmid = get_shm(&key, shm2, 128)) != -1);
+		//remove_shm(shmid);
+
+	}
+
 	printf("[%s] "ANSI_COLOR_GREEN"Test OK\n"ANSI_COLOR_RESET,basename(argv[0]));
 	exit(EXIT_SUCCESS);
 }
