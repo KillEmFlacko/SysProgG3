@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <libgen.h>
-#include "lib/lib.h"
+#include "CommonAssignmentIPC01/libsp.h"
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -45,7 +45,38 @@
 #define FAILURE_MESSAGE ANSI_COLOR_RED"Test FAILED"ANSI_COLOR_RESET
 
 int main(int argc, char **argv){
-	assert(add(1,2) == 3);
+	key_t key = IPC_PRIVATE;
+
+	/*
+	 * Test semaphore set creation
+	 */
+	int id_sem = get_sem(&key,1,1);
+	assert(id_sem != -1);
+
+	/*
+	 * Test wait
+	 *
+	 * IPC_NOWAIT should not cause an error, that is because
+	 * no other process has this semaphore set.
+	 */
+	wait_sem(id_sem,0,IPC_NOWAIT);
+	assert(semctl(id_sem,0,GETVAL) == 0);
+
+	/*
+	 * Test signal
+	 *
+	 * IPC_NOWAIT should not cause an error, that is because
+	 * no other process has this semaphore set.
+	 */
+	signal_sem(id_sem,0,IPC_NOWAIT);
+	assert(semctl(id_sem,0,GETVAL) == 1);
+
+	/*
+	 * Test remove semaphore
+	 */
+	remove_sem(id_sem);
+	assert(semctl(id_sem,0,GETVAL) == -1);
+
 	printf("[%s] "ANSI_COLOR_GREEN"Test OK\n"ANSI_COLOR_RESET,basename(argv[0]));
 	exit(EXIT_SUCCESS);
 }

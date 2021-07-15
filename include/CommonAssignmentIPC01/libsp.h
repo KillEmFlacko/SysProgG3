@@ -32,9 +32,16 @@
 #define _LIBSP_H
 
 #include <sys/types.h>
+#include <sys/sem.h>
+#include <sys/shm.h>
+#include <sys/stat.h>
 
 #define MAX_MSGQUEUE_LEN 128
+<<<<<<< HEAD
 #define SEMPERM 0666
+=======
+#define SEMPERM (S_IRUSR|S_IWUSR)
+>>>>>>> a762460c770dbe1ce51bf7aeb45b3fd4f3a5a0a8
 
 /* Message struct  :
    - type: Represents the type of the message
