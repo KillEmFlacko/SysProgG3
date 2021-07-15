@@ -34,9 +34,6 @@
 
 #include <asm-generic/errno-base.h>
 #include <asm-generic/errno.h>
-#include <sys/sem.h>
-#include <sys/shm.h>
-#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -107,16 +104,16 @@ int get_sem (key_t *chiave_sem, int numsem, int initsem)
 	char error_string[ERRMSG_MAX_LEN];
 
 	// Check if the semaphore exists
-	if ((semid = semget(*chiave_sem, 0, 0)) == -1)
+	if ((semid = semget(*chiave_sem, numsem, SEMPERM)) == -1)
 	{
+		fprintf(stderr,"OK\n");
 		if(errno == ENOENT) {
 			/*
 			 * If the semaphore set does not exist
 			 * create a new semaphore set
 			 */
 			if ((semid = semget(*chiave_sem, numsem, IPC_CREAT | IPC_EXCL | SEMPERM)) == -1){
-				snprintf(error_string,ERRMSG_MAX_LEN,"get_sem(chiave_sem: %p,numsem: %d,initsem: %d) - \
-						Cannot create semaphore set",chiave_sem,numsem,initsem);
+				snprintf(error_string,ERRMSG_MAX_LEN,"get_sem(chiave_sem: %p,numsem: %d,initsem: %d) - Cannot create semaphore set",chiave_sem,numsem,initsem);
 				perror(error_string);
 				return -1;
 			}
@@ -124,8 +121,7 @@ int get_sem (key_t *chiave_sem, int numsem, int initsem)
 			/*
 			 * Semaphore set exists but something went wrong
 			 */
-			snprintf(error_string,ERRMSG_MAX_LEN,"get_sem(chiave_sem: %p,numsem: %d,initsem: %d) - \
-					Cannot create semaphore set",chiave_sem,numsem,initsem);
+			snprintf(error_string,ERRMSG_MAX_LEN,"get_sem(chiave_sem: %p,numsem: %d,initsem: %d) - Cannot retrieve semaphore set",chiave_sem,numsem,initsem);
 			perror(error_string);
 			return -1;
 
@@ -135,21 +131,19 @@ int get_sem (key_t *chiave_sem, int numsem, int initsem)
 	/*
 	 * Load the array for semaphore set initialization
 	 */
-	struct sembuf *sbuf = (struct sembuf*)malloc(sizeof(struct sembuf) * numsem);
+	int *set_array = (int*)malloc(sizeof(int) * numsem);
 	for(int i = 0; i < numsem; i++){
-		sbuf[i].sem_num = numsem;
-		sbuf[i].sem_op = initsem;
-		sbuf[i].sem_flg = 0;
+		set_array[i] = initsem;
 	}
 
 	/*
 	 * Perform semaphore set initialization
 	 */
 	int status = 0;
-	if ((status = semop(semid, sbuf, numsem)) == -1) {
-		snprintf(error_string,ERRMSG_MAX_LEN,"get_sem(chiave_sem: %p,numsem: %d,initsem: %d) - \
-				Cannot create semaphore set",chiave_sem,numsem,initsem);
+	if ((status = semctl(semid, 0, SETALL, set_array)) == -1) {
+		snprintf(error_string,ERRMSG_MAX_LEN,"get_sem(chiave_sem: %p,numsem: %d,initsem: %d) - Cannot init semaphore set",chiave_sem,numsem,initsem);
 		perror(error_string);
+		remove_sem(semid);
 		return -1;
 	}
 
