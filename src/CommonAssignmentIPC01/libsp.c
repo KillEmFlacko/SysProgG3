@@ -37,6 +37,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#ifdef DEBUG
+#include <unistd.h>
+#endif
 #include "CommonAssignmentIPC01/libsp.h"
 
 #define ERRMSG_MAX_LEN 128
@@ -55,9 +58,13 @@ int get_shm (key_t *chiave, char **ptr_shared, int dim)
 	char error_string[ERRMSG_MAX_LEN];
 
 	// Check if the segment exists
-	if ((shmid = shmget(*chiave, 0, 0)) == -1)
-	{
-		if(errno == ENOENT){
+	if ((shmid = shmget(*chiave, dim, SEMPERM)) == -1)
+	{	
+		if(errno == ENOENT)
+		{
+#ifdef DEBUG
+			write(STDERR_FILENO,"Creation of a shared memory segment\n",27);
+#endif
 			// It does not exist... Creation of the shared memory
 			if ((shmid = shmget(*chiave, dim, IPC_CREAT | IPC_EXCL | SEMPERM)) == -1)
 			{
@@ -65,7 +72,9 @@ int get_shm (key_t *chiave, char **ptr_shared, int dim)
 				perror(error_string);
 				return -1;
 			}
-		} else {
+		}
+		else 
+		{
 			/*
 			 * Something unexpected happened 
 			 */
@@ -74,18 +83,21 @@ int get_shm (key_t *chiave, char **ptr_shared, int dim)
 			return -1;
 		}
 	}
-
+#ifdef DEBUG
+	write(STDERR_FILENO,"Function body\n",16);
+#endif
 	/*
 	 * Attach shared memory area to process address space
 	 */
-	if ((area = shmat(shmid, (void *) 0, 0)) == (void *)(-1)) 
+
+	if ((area = shmat(shmid, NULL, 0)) == (void *)(-1))
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"get_shm(chiave: %p, ptr_shared: %p, dim: %d) - Cannot create shared memory",chiave,ptr_shared,dim);
 		perror(error_string);
 		return -1;
 	}
-	
 	*ptr_shared = (char*)area;
+
 	return shmid;
 }
 

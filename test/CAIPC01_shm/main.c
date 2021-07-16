@@ -52,27 +52,34 @@ int main(int argc, char **argv){
 
 	key_t key;
 	int shmid;
+	int pid;
 
 	if ((key = ftok(".", 100)) == -1) { perror("ftok"); exit(1); }
 
-	if (fork() == 0) {
+	if ((pid = fork()) == 0) 
+	{
 
-		char** shm1;
+		char* shm1;
 		
-		assert((shmid = get_shm(&key, shm1, 128)) != -1);
-		//remove_shm(shmid);
+		assert((shmid = get_shm(&key, &shm1, 128)) != -1);
+#ifdef DEBUG
+		fprintf(stderr, "shmid: %d\n", shmid);
+#endif
 
 		return 0;
 
 	}
-	else {
-
+	else 
+	{
 		wait(NULL);
 
-		char** shm2;
+		char* shm2;
 		
-		//assert((shmid = get_shm(&key, shm2, 128)) != -1);
-		//remove_shm(shmid);
+		assert((shmid = get_shm(&key, &shm2, 128)) != -1);
+#ifdef DEBUG
+		fprintf(stderr, "shmid: %d\n", shmid);
+#endif
+		remove_shm(shmid);
 
 	}
 
