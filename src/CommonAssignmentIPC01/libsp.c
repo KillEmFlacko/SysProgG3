@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <sys/types.h>
 #ifdef DEBUG
 #include <unistd.h>
 #endif
@@ -59,7 +60,7 @@ int get_shm (key_t *chiave, char **ptr_shared, int dim)
 
 	// Check if the segment exists
 	if ((shmid = shmget(*chiave, dim, SEMPERM)) == -1)
-	{	
+	{
 		if(errno == ENOENT)
 		{
 #ifdef DEBUG
@@ -73,10 +74,10 @@ int get_shm (key_t *chiave, char **ptr_shared, int dim)
 				return -1;
 			}
 		}
-		else 
+		else
 		{
 			/*
-			 * Something unexpected happened 
+			 * Something unexpected happened
 			 */
 			snprintf(error_string,ERRMSG_MAX_LEN,"get_shm(chiave: %p, ptr_shared: %p, dim: %d) - Cannot create shared memory",chiave,ptr_shared,dim);
 			perror(error_string);
@@ -124,7 +125,7 @@ int get_sem (key_t *chiave_sem, int numsem, int initsem)
 			 * If the semaphore set does not exist
 			 * create a new semaphore set
 			 */
-			if ((semid = semget(*chiave_sem, numsem, IPC_CREAT | IPC_EXCL | SEMPERM)) == -1){
+			if ((semid = semget(*chiave_sem, numsem, IPC_CREAT | IPC_EXCL | SEMPERM)) == -1) {
 				snprintf(error_string,ERRMSG_MAX_LEN,"get_sem(chiave_sem: %p,numsem: %d,initsem: %d) - Cannot create semaphore set",chiave_sem,numsem,initsem);
 				perror(error_string);
 				return -1;
@@ -144,7 +145,7 @@ int get_sem (key_t *chiave_sem, int numsem, int initsem)
 	 * Load the array for semaphore set initialization
 	 */
 	int *set_array = (int*)malloc(sizeof(int) * numsem);
-	for(int i = 0; i < numsem; i++){
+	for(int i = 0; i < numsem; i++) {
 		set_array[i] = initsem;
 	}
 
@@ -196,7 +197,7 @@ void wait_sem (int id_sem, int numsem, int flag)
  * @param numsem index of the semaphore to signal (from 0 to sem_nsems-1)
  * @param flag operation flags (IPC_NOWAIT, SEM_UNDO)
  */
-void signal_sem (int id_sem, int numsem, int flag){
+void signal_sem (int id_sem, int numsem, int flag) {
 	int status = 0;
 	char error_string[ERRMSG_MAX_LEN];
 
@@ -205,7 +206,7 @@ void signal_sem (int id_sem, int numsem, int flag){
 	op.sem_op = 1; // Signal operation, releasing resources
 	op.sem_flg = flag; // WARNING: conversion from int to short
 
-	if((status = semop(id_sem,&op,1)) == -1){
+	if((status = semop(id_sem,&op,1)) == -1) {
 		/*
 		 * EINTR is not managed here because we are releasing
 		 * resources so no suspension is needed.
@@ -224,11 +225,11 @@ void signal_sem (int id_sem, int numsem, int flag){
  *
  * @param id_shared shared memory ID
  */
-void remove_shm (int id_shared){
+void remove_shm (int id_shared) {
 	int status = 0;
 	char error_string[ERRMSG_MAX_LEN];
 
-	if((status = shmctl(id_shared,IPC_RMID,(struct shmid_ds *)NULL)) == -1){
+	if((status = shmctl(id_shared,IPC_RMID,(struct shmid_ds *)NULL)) == -1) {
 		/*
 		 * TODO: Maybe you should specify the error type cheking errno
 		 */
@@ -245,7 +246,7 @@ void remove_sem (int id_sem) {
 	int status = 0;
 	char error_string[ERRMSG_MAX_LEN];
 
-	if((status = semctl(id_sem,0,IPC_RMID)) == -1){
+	if((status = semctl(id_sem,0,IPC_RMID)) == -1) {
 		/*
 		 * TODO: Maybe you should specify the error type cheking errno
 		 */
@@ -255,44 +256,45 @@ void remove_sem (int id_sem) {
 }
 
 /* async send on a message queue*/
-void send_asyn(int msg_qid, Message *PTR_mess, int send_flag){
+void send_asyn(int msg_qid, Message *PTR_mess, int send_flag) {
 	return;
 }
 
 /* async send on a message queue*/
-void send_sync(int msg_qid, Message *messaggio, int flag){
+void send_sync(int msg_qid, Message *messaggio, int flag) {
 	return;
 }
 
 /*async receive on a message queue*/
-void receive_async (int msg_qid, Message *PTR_mess, int receive_flag){
+void receive_async (int msg_qid, Message *PTR_mess, int receive_flag) {
 	return;
 }
 
 /*sync send on a message queue*/
-void receive_sync(int msg_qid, Message *messaggio, int flag){
+void receive_sync(int msg_qid, Message *messaggio, int flag) {
 	return;
 }
 
 /* remove a mailbox */
-void remove_mailbox(int msg_qid){
+void remove_mailbox(int msg_qid) {
 	return;
 }
 
 /*init  monitor :
 inputs : numcond  to init;
 outputs: Monitor *: */
-Monitor *init_monitor(int ncond) 
+Monitor *init_monitor(int ncond)
 {
+	key_t key = KEY;
 	int mutex_sem, cond_sem;
 	char error_string[ERRMSG_MAX_LEN];
 
 	/*
-	* 	Creation of mutex semaphore set:
-	*	- The first semaphore is related to the mutex that garantee the access to the monitor
-	*	- The second semaphore is related to preemption
-	*/
-	if ((mutex_sem = get_sem(KEY, LEN_MUTEX, 0)) == -1)
+	 * 	Creation of mutex semaphore set:
+	 *	- The first semaphore is related to the mutex that garantee the access to the monitor
+	 *	- The second semaphore is related to preemption
+	 */
+	if ((mutex_sem = get_sem(&key, LEN_MUTEX, 0)) == -1)
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(ncond: %d) - Cannot init monitor",ncond);
 		perror(error_string);
@@ -300,8 +302,8 @@ Monitor *init_monitor(int ncond)
 	}
 
 	/*
-	* 	The only semaphore initialized to 1 is the mutex one
-	*/
+	 * 	The only semaphore initialized to 1 is the mutex one
+	 */
 	if (semctl(mutex_sem, I_MUTEX, SETVAL, 1) == -1)
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(ncond: %d) - Cannot init monitor",ncond);
@@ -310,9 +312,9 @@ Monitor *init_monitor(int ncond)
 	}
 
 	/*
-	* 	Creation of a semaphore set with ncond semaphore. All are initialized to 0
-	*/
-	if ((cond_sem = get_sem(KEY, ncond, 0)) == -1)
+	 * 	Creation of a semaphore set with ncond semaphore. All are initialized to 0
+	 */
+	if ((cond_sem = get_sem(&key, ncond, 0)) == -1)
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(ncond: %d) - Cannot init monitor",ncond);
 		perror(error_string);
@@ -320,10 +322,10 @@ Monitor *init_monitor(int ncond)
 	}
 
 	/*
-	*	Is our responsibility to allocate and deallocate the structure
-	*/
+	 *	Is our responsibility to allocate and deallocate the structure
+	 */
 	Monitor* mon = (Monitor*)malloc(sizeof(Monitor));
-	
+
 	mon -> id_mutex = mutex_sem;
 	mon -> numcond = ncond;
 	mon -> id_cond = cond_sem;
@@ -359,7 +361,7 @@ void remove_monitor(Monitor *mon);
 /*Routine IS_queue_empty : returns 1 if the condition variable queue is empty, 0 otherwise*/
 /*inputs : Monitor *mon :
 cond_num : number of condition variable*/
-int IS_queue_empty(Monitor *mon,int cond_num) 
+int IS_queue_empty(Monitor *mon,int cond_num)
 {
 	int status = 0;
 	char error_string[ERRMSG_MAX_LEN];
