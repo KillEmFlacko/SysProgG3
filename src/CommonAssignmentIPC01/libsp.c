@@ -279,9 +279,58 @@ void remove_mailbox(int msg_qid){
 	return;
 }
 
-Monitor *init_monitor(int ncond);	/*init  monitor :
+/*init  monitor :
 inputs : numcond  to init;
 outputs: Monitor *: */
+Monitor *init_monitor(int ncond) 
+{
+	int mutex_sem, cond_sem;
+	char error_string[ERRMSG_MAX_LEN];
+
+	/*
+	* 	Creation of mutex semaphore set:
+	*	- The first semaphore is related to the mutex that garantee the access to the monitor
+	*	- The second semaphore is related to preemption
+	*/
+	if ((mutex_sem = get_sem(KEY, LEN_MUTEX, 0)) == -1)
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(ncond: %d) - Cannot init monitor",ncond);
+		perror(error_string);
+		return NULL;
+	}
+
+	/*
+	* 	The only semaphore initialized to 1 is the mutex one
+	*/
+	if (semctl(mutex_sem, I_MUTEX, SETVAL, 1) == -1)
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(ncond: %d) - Cannot init monitor",ncond);
+		perror(error_string);
+		return NULL;
+	}
+
+	/*
+	* 	Creation of a semaphore set with ncond semaphore. All are initialized to 0
+	*/
+	if ((cond_sem = get_sem(KEY, ncond, 0)) == -1)
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(ncond: %d) - Cannot init monitor",ncond);
+		perror(error_string);
+		return NULL;
+	}
+
+	/*
+	*	Is our responsibility to allocate and deallocate the structure
+	*/
+	Monitor* mon = (Monitor*)malloc(sizeof(Monitor));
+	
+	mon -> id_mutex = mutex_sem;
+	mon -> numcond = ncond;
+	mon -> id_cond = cond_sem;
+
+	return mon;
+}
+
 
 
 /*Routine enter_monitor .
@@ -310,4 +359,17 @@ void remove_monitor(Monitor *mon);
 /*Routine IS_queue_empty : returns 1 if the condition variable queue is empty, 0 otherwise*/
 /*inputs : Monitor *mon :
 cond_num : number of condition variable*/
-int IS_queue_empty(Monitor *mon,int cond_num);
+int IS_queue_empty(Monitor *mon,int cond_num) 
+{
+	int status = 0;
+	char error_string[ERRMSG_MAX_LEN];
+
+	if ((status = semctl(mon -> id_cond, cond_num, GETNCNT)) == -1)
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"IS_queue_empty(mon: %p, cond_num: %d) - Cannot check if queue is empty", mon, cond_num);
+		perror(error_string);
+		return -1;
+	}
+
+	return (status == 0);
+}
