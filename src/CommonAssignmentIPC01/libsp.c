@@ -45,7 +45,8 @@
 
 #define ERRMSG_MAX_LEN 128
 
-/** @brief Request a shared memory area and attach to process address space
+/**
+ * @brief Request a shared memory area and attach to process address space
  *
  * @param chiave key of the shared memory
  * @param ptr_shared if all OK points to the start of shared memory area
@@ -102,7 +103,8 @@ int get_shm (key_t *chiave, char **ptr_shared, int dim)
 	return shmid;
 }
 
-/** @brief Request a semaphore.
+/**
+ * @brief Request a semaphore.
  * If the semaphore already exists for the provided key numsem and
  * initsem are ignored.
  *
@@ -144,7 +146,7 @@ int get_sem (key_t *chiave_sem, int numsem, int initsem)
 	/*
 	 * Load the array for semaphore set initialization
 	 */
-	int *set_array = (int*)malloc(sizeof(int) * numsem);
+	unsigned short *set_array = (unsigned short*)malloc(sizeof(unsigned short) * numsem);
 	for(int i = 0; i < numsem; i++) {
 		set_array[i] = initsem;
 	}
@@ -163,7 +165,8 @@ int get_sem (key_t *chiave_sem, int numsem, int initsem)
 	return semid;
 }
 
-/** @brief Wait on the semaphore
+/**
+ * @brief Wait on the semaphore
  *
  * @param id_sem semaphore set ID
  * @param numsem index of the semaphore to call wait on (from 0 to sem_nsems-1)
@@ -191,7 +194,8 @@ void wait_sem (int id_sem, int numsem, int flag)
 	}
 }
 
-/** @brief Signal on a semaphore
+/**
+ * @brief Signal on a semaphore
  *
  * @param id_sem semaphore set ID
  * @param numsem index of the semaphore to signal (from 0 to sem_nsems-1)
@@ -221,7 +225,8 @@ void signal_sem (int id_sem, int numsem, int flag) {
 	}
 }
 
-/** @brief Remove a shared memory
+/**
+ * @brief Remove a shared memory
  *
  * @param id_shared shared memory ID
  */
@@ -238,7 +243,8 @@ void remove_shm (int id_shared) {
 	}
 }
 
-/** @brief Remove a semaphore
+/**
+ * @brief Remove a semaphore
  *
  * @param id_sem semaphore set ID
  */
@@ -280,9 +286,12 @@ void remove_mailbox(int msg_qid) {
 	return;
 }
 
-/*init  monitor :
-inputs : numcond  to init;
-outputs: Monitor *: */
+/**
+ * @brief Initialize monitor.
+ *
+ * @param ncond number of conditiions to support and to initialize
+ * @retval reference to the monitor, NULL on error
+ */
 Monitor *init_monitor(int ncond)
 {
 	char error_string[ERRMSG_MAX_LEN];
@@ -293,7 +302,19 @@ Monitor *init_monitor(int ncond)
 	 *	- The second semaphore is related to preemption
 	 */
 	key_t key_mutex = KEY(1);
+	if(key_mutex == -1)
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(ncond: %d) - Cannot generate mutex key",ncond);
+		perror(error_string);
+		return NULL;
+	}
+
 	int mutex_sem;
+
+#ifdef DEBUG
+	fprintf(stderr,"Path to file: %s\n",TMP_FILE);
+	fprintf(stderr,"Mutex key: %d\n",key_mutex);
+#endif
 
 	if ((mutex_sem = get_sem(&key_mutex, LEN_MUTEX, 0)) == -1)
 	{
@@ -316,8 +337,18 @@ Monitor *init_monitor(int ncond)
 	 * 	Creation of a semaphore set with ncond semaphore. All are initialized to 0
 	 */
 	key_t key_cond = KEY(2);
+	if(key_cond == -1)
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(ncond: %d) - Cannot generate condition variables key",ncond);
+		perror(error_string);
+		return NULL;
+	}
+
 	int cond_sem;
 
+#ifdef DEBUG
+	fprintf(stderr,"Cond key: %d\n",key_cond);
+#endif
 	if ((cond_sem = get_sem(&key_cond, ncond, 0)) == -1)
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(ncond: %d) - Cannot init monitor",ncond);
@@ -337,34 +368,76 @@ Monitor *init_monitor(int ncond)
 	return mon;
 }
 
+/**
+ * @brief Enter monitor
+ * Simply wait on moutex
+ *
+ * @param mon pointer to the monitor
+ */
+void enter_monitor(Monitor *mon) {
+	wait_sem(mon->id_mutex,I_MUTEX,0);
+}
 
+/**
+ * @brief Leave monitor
+ * Check for preemption and signals on the right semaphore
+ *
+ * @param mon pointer to the monitor
+ */
+void leave_monitor(Monitor *mon) {
+	int status = 0;
+	char error_string[ERRMSG_MAX_LEN];
 
-/*Routine enter_monitor .
-inputs : Monitor * mon ;
-waits on mutex*/
+	if((status = semctl(mon->id_mutex,I_PREEMPT,GETNCNT)) == -1)
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"leave_monitor(mon: %p) - Cannot leave monitor",mon);
+		perror(error_string);
+		return;
+	}
 
-void enter_monitor(Monitor *mon);
-
-/*Routine leave_monitor  :
-inputs: Monitor *mon ;
-mutex.signal()*/
-
-void leave_monitor(Monitor *mon);
+	if(status > 0)
+	{
+		signal_sem(mon->id_mutex,I_PREEMPT,0);
+	}
+	else
+	{
+		signal_sem(mon->id_mutex,I_MUTEX,0);
+	}
+}
 
 /* Routine wait_cond  / signal_cond:.
 inputs : Monitor *mon :  ;
 cond_num : index of the condition var */
 
-void wait_cond(Monitor *mon,int cond_num);
+void wait_cond(Monitor *mon,int cond_num)
+{
+	return;
+}
 
-void signal_cond(Monitor *mon,int cond_num);
+void signal_cond(Monitor *mon,int cond_num)
+{
+	return;
+}
 
-/*Routine remove_monitor */
-void remove_monitor(Monitor *mon);
+/**
+ * @brief Remove the monitor
+ * 
+ * @param mon pointer to the monitor
+ */
+void remove_monitor(Monitor *mon)
+{
+	remove_sem(mon->id_cond);
+	remove_sem(mon->id_mutex);
+	free((void*)mon);
+}
 
-/*Routine IS_queue_empty : returns 1 if the condition variable queue is empty, 0 otherwise*/
-/*inputs : Monitor *mon :
-cond_num : number of condition variable*/
+/**
+ * @brief Check if the condition queue is empty
+ *
+ * @param mon pointer to the monitor containing the condition variable
+ * @param cond_num index of the condition variable
+ * @retval 1 if the condition variable queue is empty, 0 otherwise
+ */
 int IS_queue_empty(Monitor *mon,int cond_num)
 {
 	int status = 0;

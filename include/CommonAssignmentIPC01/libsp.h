@@ -43,7 +43,7 @@
 #define I_MUTEX 0   // Index of the mutex semaphore in the set
 #define I_PREEMPT 1 // Index of the preempt semaphore in the set (also called urgent)
 
-#define KEY(k) (ftok("tmp.key",k)) // TODO: Creare file
+#define KEY(k) (ftok(TMP_FILE,k)) // TODO: Creare file
 
 /* Message struct  :
    - type: Represents the type of the message
