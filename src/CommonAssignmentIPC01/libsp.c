@@ -411,7 +411,27 @@ cond_num : index of the condition var */
 
 void wait_cond(Monitor *mon,int cond_num)
 {
-	return;
+	int preempt_count;
+	char error_string[ERRMSG_MAX_LEN];
+	
+	if ((preempt_count = semctl(mon -> id_mutex, I_PREEMPT, GETNCNT)) == -1)
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"wait_cond(mon: %p, cond_num: %d) - Cannot wait on resource", mon, cond_num);
+		perror(error_string);
+		return;
+	}
+
+	if (preempt_count > 0)
+	{
+		signal_sem(mon -> id_mutex, I_PREEMPT, 0);
+	}
+	else
+	{
+		signal_sem(mon -> id_mutex, I_MUTEX, 0);
+	}
+
+	wait_sem(mon -> id_cond, cond_num, 0);
+
 }
 
 void signal_cond(Monitor *mon,int cond_num)
