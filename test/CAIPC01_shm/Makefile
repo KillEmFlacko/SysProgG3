@@ -38,7 +38,7 @@ EXEC_ABSPATH = $(BUILD)/$(MODULE_NAME)/bin/$(EXEC)
 all: $(EXEC_ABSPATH)
 
 depend:
-	makedepend -I $(INCLUDE) $(SRCS)
+	makedepend -I $(INCLUDE) $(SRCS) -Y /usr/include
 	for dir in $(SUBDIRS); do \
 		$(MAKE) -C $$dir $@; \
 	done
@@ -65,33 +65,5 @@ clean:
 
 # DO NOT DELETE
 
-main.o: /usr/include/stdio.h /usr/include/bits/libc-header-start.h
-main.o: /usr/include/features.h /usr/include/stdc-predef.h
-main.o: /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h
-main.o: /usr/include/bits/long-double.h /usr/include/gnu/stubs.h
-main.o: /usr/include/bits/types.h /usr/include/bits/timesize.h
-main.o: /usr/include/bits/typesizes.h /usr/include/bits/time64.h
-main.o: /usr/include/bits/types/__fpos_t.h
-main.o: /usr/include/bits/types/__mbstate_t.h
-main.o: /usr/include/bits/types/__fpos64_t.h /usr/include/bits/types/__FILE.h
-main.o: /usr/include/bits/types/FILE.h /usr/include/bits/types/struct_FILE.h
-main.o: /usr/include/bits/stdio_lim.h /usr/include/bits/floatn.h
-main.o: /usr/include/bits/floatn-common.h /usr/include/stdlib.h
-main.o: /usr/include/bits/waitflags.h /usr/include/bits/waitstatus.h
-main.o: /usr/include/sys/types.h /usr/include/bits/types/clock_t.h
-main.o: /usr/include/bits/types/clockid_t.h /usr/include/bits/types/time_t.h
-main.o: /usr/include/bits/types/timer_t.h /usr/include/bits/stdint-intn.h
-main.o: /usr/include/endian.h /usr/include/bits/endian.h
-main.o: /usr/include/bits/endianness.h /usr/include/bits/byteswap.h
-main.o: /usr/include/bits/uintn-identity.h /usr/include/sys/select.h
-main.o: /usr/include/bits/select.h /usr/include/bits/types/sigset_t.h
-main.o: /usr/include/bits/types/__sigset_t.h
-main.o: /usr/include/bits/types/struct_timeval.h
-main.o: /usr/include/bits/types/struct_timespec.h
-main.o: /usr/include/bits/pthreadtypes.h
-main.o: /usr/include/bits/thread-shared-types.h
-main.o: /usr/include/bits/pthreadtypes-arch.h
-main.o: /usr/include/bits/struct_mutex.h /usr/include/bits/struct_rwlock.h
-main.o: /usr/include/alloca.h /usr/include/bits/stdlib-float.h
-main.o: /usr/include/assert.h /usr/include/libgen.h
 main.o: /home/armando/git/SysProgG3/include/lib/lib.h
+main.o: /home/armando/git/SysProgG3/include/CommonAssignmentIPC01/libsp.h
