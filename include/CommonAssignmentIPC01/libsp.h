@@ -39,6 +39,10 @@
 #define MAX_MSGQUEUE_LEN 128
 #define SEMPERM (S_IRUSR|S_IWUSR)
 
+#define LEN_MUTEX 2 // Number of semaphore in mutex set
+#define I_MUTEX 0 // Index of the mutex semaphore in the set
+#define I_PREEMPT 1 // Index of the preempt semaphore in the set (also called urgent)
+
 /* Message struct  :
    - type: Represents the type of the message
    - data: Contains the text of the message
