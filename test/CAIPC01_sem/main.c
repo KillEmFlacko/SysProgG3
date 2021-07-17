@@ -44,14 +44,24 @@
 
 #define FAILURE_MESSAGE ANSI_COLOR_RED"Test FAILED"ANSI_COLOR_RESET
 
+#define LEN 8
+
 int main(int argc, char **argv){
 	key_t key = IPC_PRIVATE;
 
 	/*
 	 * Test semaphore set creation
 	 */
-	int id_sem = get_sem(&key,1,1);
+	int id_sem = get_sem(&key,LEN,1);
 	assert(id_sem != -1);
+
+	unsigned short array[LEN];
+	int status = semctl(id_sem,0,GETALL,array);
+	assert(status != -1);
+	for(int i = 0; i < LEN; i++)
+	{
+		assert(array[i] == 1);
+	}
 
 	/*
 	 * Test wait
