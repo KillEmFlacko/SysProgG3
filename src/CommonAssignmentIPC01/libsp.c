@@ -285,8 +285,6 @@ inputs : numcond  to init;
 outputs: Monitor *: */
 Monitor *init_monitor(int ncond)
 {
-	key_t key = KEY;
-	int mutex_sem, cond_sem;
 	char error_string[ERRMSG_MAX_LEN];
 
 	/*
@@ -294,7 +292,10 @@ Monitor *init_monitor(int ncond)
 	 *	- The first semaphore is related to the mutex that garantee the access to the monitor
 	 *	- The second semaphore is related to preemption
 	 */
-	if ((mutex_sem = get_sem(&key, LEN_MUTEX, 0)) == -1)
+	key_t key_mutex = KEY(1);
+	int mutex_sem;
+
+	if ((mutex_sem = get_sem(&key_mutex, LEN_MUTEX, 0)) == -1)
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(ncond: %d) - Cannot init monitor",ncond);
 		perror(error_string);
@@ -314,7 +315,10 @@ Monitor *init_monitor(int ncond)
 	/*
 	 * 	Creation of a semaphore set with ncond semaphore. All are initialized to 0
 	 */
-	if ((cond_sem = get_sem(&key, ncond, 0)) == -1)
+	key_t key_cond = KEY(2);
+	int cond_sem;
+
+	if ((cond_sem = get_sem(&key_cond, ncond, 0)) == -1)
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(ncond: %d) - Cannot init monitor",ncond);
 		perror(error_string);
