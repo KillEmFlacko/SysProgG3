@@ -357,7 +357,19 @@ cond_num : index of the condition var */
 
 void wait_cond(Monitor *mon,int cond_num);
 
-void signal_cond(Monitor *mon,int cond_num);
+int urgent_count = 0; // DA SPOSTARE: deve andare nel .h, magari in monitor
+void signal_cond(Monitor *mon,int cond_num)
+{
+	urgent_count++;
+	if(mon->numcond > 0)
+	{
+		// signal on condsem semaphore. no flags
+		signal_sem(mon->id_cond, 0, 0);
+		// wait on urgent semaphore (index 1 of the set id_mutex). no flags
+		wait_sem(mon->id_mutex, 1, 0);
+	}
+	urgent_count --;
+}
 
 /*Routine remove_monitor */
 void remove_monitor(Monitor *mon);
