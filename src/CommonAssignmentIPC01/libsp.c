@@ -86,7 +86,7 @@ int get_shm (key_t *chiave, char **ptr_shared, int dim)
 		}
 	}
 #ifdef DEBUG
-	write(STDERR_FILENO,"Function body\n",16);
+	write(STDERR_FILENO,"Function body\n",15);
 #endif
 	/*
 	 * Attach shared memory area to process address space
@@ -121,7 +121,6 @@ int get_sem (key_t *chiave_sem, int numsem, int initsem)
 	// Check if the semaphore exists
 	if ((semid = semget(*chiave_sem, numsem, SEMPERM)) == -1)
 	{
-		fprintf(stderr,"OK\n");
 		if(errno == ENOENT) {
 			/*
 			 * If the semaphore set does not exist
@@ -385,17 +384,17 @@ void enter_monitor(Monitor *mon) {
  * @param mon pointer to the monitor
  */
 void leave_monitor(Monitor *mon) {
-	int status = 0;
+	int preempt_count = 0;
 	char error_string[ERRMSG_MAX_LEN];
 
-	if((status = semctl(mon->id_mutex,I_PREEMPT,GETNCNT)) == -1)
+	if((preempt_count = semctl(mon->id_mutex,I_PREEMPT,GETNCNT)) == -1)
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"leave_monitor(mon: %p) - Cannot leave monitor",mon);
 		perror(error_string);
 		return;
 	}
 
-	if(status > 0)
+	if(preempt_count > 0)
 	{
 		signal_sem(mon->id_mutex,I_PREEMPT,0);
 	}
