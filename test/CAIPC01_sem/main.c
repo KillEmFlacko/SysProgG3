@@ -87,7 +87,7 @@ int main(int argc, char **argv){
 	remove_sem(id_sem);
 	assert(semctl(id_sem,0,GETVAL) == -1);
 
-	printf("[%s] "ANSI_COLOR_GREEN"Test OK\n"ANSI_COLOR_RESET,basename(argv[0]));
+	printf("["ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET"] "ANSI_COLOR_GREEN"Test OK\n"ANSI_COLOR_RESET,basename(argv[0]));
 	exit(EXIT_SUCCESS);
 }
 

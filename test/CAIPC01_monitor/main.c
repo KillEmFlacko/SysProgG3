@@ -86,14 +86,24 @@ int main(int argc, char **argv)
 	assert(array[I_PREEMPT] == 0);
 	assert(array[I_MUTEX] == 1);
 
+#ifdef DEBUG
+	fprintf(stderr,"Monitor initialized correctly\n");
+#endif
+
 	pid_t child;
 	if((child = fork()) != 0)
 	{
 		/*
 		 * PARENT
 		 */
+		sleep(1);
+
 		enter_monitor(mon);
 		assert(semctl(mon->id_mutex,I_MUTEX,GETVAL) == 0);
+
+#ifdef DEBUG
+		fprintf(stderr,"Parent acquired monitor, sending SIGCONT to child\n");
+#endif
 
 		kill(child,SIGCONT);
 		wait_cond(mon,0);
@@ -122,12 +132,12 @@ int main(int argc, char **argv)
 
 		if(retval == EXIT_SUCCESS)
 		{
-			printf("[%s] "ANSI_COLOR_GREEN"Test OK\n"ANSI_COLOR_RESET,basename(argv[0]));
+			printf("["ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET"] "ANSI_COLOR_GREEN"Test OK\n"ANSI_COLOR_RESET,basename(argv[0]));
 			exit(EXIT_SUCCESS);
 		}
 		else
 		{
-			printf("[%s] "ANSI_COLOR_RED"Test FAILED\n"ANSI_COLOR_RESET,basename(argv[0]));
+			printf("["ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET"] "ANSI_COLOR_RED"Test FAILED\n"ANSI_COLOR_RESET,basename(argv[0]));
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -140,7 +150,10 @@ int main(int argc, char **argv)
 		/*
 		 * Wait for OK from parent
 		 */
-		pause();
+#ifdef DEBUG
+		fprintf(stderr,"Proc %d: Child paused\n",getpid());
+#endif
+		kill(getpid(), SIGSTOP);
 
 		enter_monitor(mon);
 		assert(semctl(mon->id_mutex,I_MUTEX,GETVAL) == 0);
