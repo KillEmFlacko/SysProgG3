@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
+#include <sys/msg.h>
 #include <sys/stat.h>
 
 #define MAX_MSGQUEUE_LEN 128

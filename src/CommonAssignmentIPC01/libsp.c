@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <sys/msg.h>
 #include <sys/types.h>
 #ifdef DEBUG
 #include <unistd.h>
@@ -267,7 +268,14 @@ void send_asyn(int msg_qid, Message *PTR_mess, int send_flag) {
 
 /* async send on a message queue*/
 void send_sync(int msg_qid, Message *messaggio, int flag) {
-	return;
+	int status;
+	char error_string[ERRMSG_MAX_LEN];
+
+	if((status = msgsnd(msg_qid,messaggio,MAX_MSGQUEUE_LEN,flag)) == -1)
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"send_sync(msg_qid: %d, messaggio: %p, flag: %d) - Cannot send message",msg_qid,messaggio,flag);
+		perror(error_string);
+	}
 }
 
 /*async receive on a message queue*/
@@ -277,11 +285,18 @@ void receive_async (int msg_qid, Message *PTR_mess, int receive_flag) {
 
 /*sync send on a message queue*/
 void receive_sync(int msg_qid, Message *messaggio, int flag) {
-	return;
+	int status;
+	char error_string[ERRMSG_MAX_LEN];
+
+	if((status = msgrcv(msg_qid,messaggio,MAX_MSGQUEUE_LEN,messaggio->type,flag)) == -1)
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"receive_sync(msg_qid: %d, messaggio: %p, flag: %d) - Cannot receive message",msg_qid,messaggio,flag);
+		perror(error_string);
+	}
 }
 
 /* create a mailbox */
-int get_mailbox(key_t *chiave_msg) 
+int get_mailbox(key_t *chiave_msg)
 {
 	return 0;
 }
@@ -418,7 +433,7 @@ void wait_cond(Monitor *mon,int cond_num)
 {
 	int preempt_count;
 	char error_string[ERRMSG_MAX_LEN];
-	
+
 	if ((preempt_count = semctl(mon -> id_mutex, I_PREEMPT, GETNCNT)) == -1)
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"wait_cond(mon: %p, cond_num: %d) - Cannot wait on resource", mon, cond_num);
@@ -444,7 +459,7 @@ void signal_cond(Monitor *mon,int cond_num)
 	int is_empty = IS_queue_empty(mon, cond_num);
 	char error_string[ERRMSG_MAX_LEN];
 	if(is_empty == -1)
-	{	
+	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"signal_cond(mon: %p, cond_num: %d) - Cannot signal the selected semaphore", mon, cond_num);
 		perror(error_string);
 		return;
@@ -454,12 +469,12 @@ void signal_cond(Monitor *mon,int cond_num)
 		signal_sem(mon->id_cond, cond_num, 0);
 		wait_sem(mon->id_mutex, I_PREEMPT, 0);
 	}
-	
+
 }
 
 /**
  * @brief Remove the monitor
- * 
+ *
  * @param mon pointer to the monitor
  */
 void remove_monitor(Monitor *mon)
