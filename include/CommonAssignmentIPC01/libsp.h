@@ -69,7 +69,7 @@ void remove_shm(int id_shared);
 /* remove a shared memory */
 void remove_sem(int id_sem);
 /* async send on a message queue*/
-void send_asyn(int msg_qid, Message *PTR_mess, int send_flag);
+void send_async(int msg_qid, Message *PTR_mess, int send_flag);
 /* async send on a message queue*/
 void send_sync(int msg_qid, Message *messaggio, int flag);
 /*async receive on a message queue*/

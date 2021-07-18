@@ -261,34 +261,73 @@ void remove_sem (int id_sem) {
 }
 
 /* async send on a message queue*/
-void send_asyn(int msg_qid, Message *PTR_mess, int send_flag) {
-	return;
+void send_async(int msg_qid, Message *PTR_mess, int send_flag)
+{
+	char error_string[ERRMSG_MAX_LEN];
+
+	if (msgsnd(msg_qid, PTR_mess, MAX_MSGQUEUE_LEN, IPC_NOWAIT | send_flag) == -1)
+ 	{
+ 		snprintf(error_string,ERRMSG_MAX_LEN,"send_async(msg_qid: %d, PTR_mess: %p, send_flag: %d) - Cannot send an asynchronous message", msg_qid, PTR_mess, send_flag);
+		perror(error_string);
+		return;
+ 	}
+
 }
 
-/* async send on a message queue*/
-void send_sync(int msg_qid, Message *messaggio, int flag) {
+/* sync send on a message queue*/
+void send_sync(int msg_qid, Message *messaggio, int flag)
+{
 	return;
 }
 
 /*async receive on a message queue*/
-void receive_async (int msg_qid, Message *PTR_mess, int receive_flag) {
-	return;
+void receive_async (int msg_qid, Message *PTR_mess, int receive_flag)
+{
+	char error_string[ERRMSG_MAX_LEN];
+
+	if (msgrcv(msg_qid, PTR_mess, MAX_MSGQUEUE_LEN, PTR_mess -> type, IPC_NOWAIT | receive_flag) == -1)
+ 	{
+ 		snprintf(error_string,ERRMSG_MAX_LEN,"receive_async(msg_qid: %d, PTR_mess: %p, receive_flag: %d) - Cannot receive an asynchronous message", msg_qid, PTR_mess, receive_flag);
+		perror(error_string);
+		return;
+ 	}
+
 }
 
 /*sync send on a message queue*/
-void receive_sync(int msg_qid, Message *messaggio, int flag) {
+void receive_sync(int msg_qid, Message *messaggio, int flag)
+{
 	return;
 }
 
 /* create a mailbox */
-int get_mailbox(key_t *chiave_msg) 
-{
-	return 0;
+int get_mailbox(key_t *chiave_msg)
+{	
+	int msg_qid;
+	char error_string[ERRMSG_MAX_LEN];
+
+	if ((msg_qid = msgget(*chiave_msg, IPC_CREAT | SEMPERM)) == -1)
+ 	{
+ 		snprintf(error_string,ERRMSG_MAX_LEN,"get_mailbox(key_t: %p) - Cannot get a mailbox", chiave_msg);
+		perror(error_string);
+		return -1;
+ 	}
+
+	return msg_qid;
 }
 
 /* remove a mailbox */
-void remove_mailbox(int msg_qid) {
-	return;
+void remove_mailbox(int msg_qid)
+{
+	char error_string[ERRMSG_MAX_LEN];
+
+	if (msgctl(msg_qid, IPC_RMID, NULL) == -1)
+ 	{
+ 		snprintf(error_string,ERRMSG_MAX_LEN,"remove_mailbox(msg_qid: %d) - Cannot remove the selected mailbox", msg_qid);
+		perror(error_string);
+		return;
+ 	}
+
 }
 
 /**
