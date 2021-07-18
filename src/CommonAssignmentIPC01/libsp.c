@@ -436,7 +436,20 @@ void wait_cond(Monitor *mon,int cond_num)
 
 void signal_cond(Monitor *mon,int cond_num)
 {
-	return;
+	int is_empty = IS_queue_empty(mon, cond_num);
+	char error_string[ERRMSG_MAX_LEN];
+	if(is_empty == -1)
+	{	
+		snprintf(error_string,ERRMSG_MAX_LEN,"signal_cond(mon: %p, cond_num: %d) - Cannot signal the selected semaphore", mon, cond_num);
+		perror(error_string);
+		return;
+	}
+	if(!is_empty)
+	{
+		signal_sem(mon->id_cond, cond_num, 0);
+		wait_sem(mon->id_mutex, I_PREEMPT, 0);
+	}
+	
 }
 
 /**
