@@ -280,6 +280,12 @@ void receive_sync(int msg_qid, Message *messaggio, int flag) {
 	return;
 }
 
+/* create a mailbox */
+int get_mailbox(key_t *chiave_msg) 
+{
+	return 0;
+}
+
 /* remove a mailbox */
 void remove_mailbox(int msg_qid) {
 	return;

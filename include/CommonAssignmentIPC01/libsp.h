@@ -76,6 +76,8 @@ void send_sync(int msg_qid, Message *messaggio, int flag);
 void receive_async(int msg_qid, Message *PTR_mess, int receive_flag);
 /*sync send on a message queue*/
 void receive_sync(int msg_qid, Message *messaggio, int flag);
+/* create a mailbox */
+int get_mailbox(key_t *chiave_msg);
 /* remove a mailbox */
 void remove_mailbox(int msg_qid);
 
