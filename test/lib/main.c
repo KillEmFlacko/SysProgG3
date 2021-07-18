@@ -16,7 +16,7 @@
 
 int main(int argc, char **argv){
 	assert(add(1,2) == 3);
-	printf("[%s] "ANSI_COLOR_GREEN"Test OK\n"ANSI_COLOR_RESET,basename(argv[0]));
+	printf("["ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET"] "ANSI_COLOR_GREEN"Test OK\n"ANSI_COLOR_RESET,basename(argv[0]));
 	exit(EXIT_SUCCESS);
 }
 
