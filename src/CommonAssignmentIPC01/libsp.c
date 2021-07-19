@@ -261,7 +261,14 @@ void remove_sem (int id_sem) {
 	}
 }
 
-/* async send on a message queue*/
+/**
+ * @brief Send an async message on a queue
+ *
+ * @param msg_qid message queue ID
+ * @param PTR_mess pointer to the structure of the message
+ * @param send_flag operation flags (MSG_EXCEPT, MSG_NOERROR)
+ * 
+ */
 void send_async(int msg_qid, Message *PTR_mess, int send_flag)
 {
 	char error_string[ERRMSG_MAX_LEN];
@@ -275,7 +282,14 @@ void send_async(int msg_qid, Message *PTR_mess, int send_flag)
 
 }
 
-/* async send on a message queue*/
+/**
+ * @brief Send a sync message on a queue
+ *
+ * @param msg_qid message queue ID
+ * @param message pointer to the structure of the message
+ * @param send_flag operation flags (MSG_EXCEPT, MSG_NOERROR)
+ * 
+ */
 void send_sync(int msg_qid, Message *messaggio, int flag) {
 	int status;
 	char error_string[ERRMSG_MAX_LEN];
@@ -313,7 +327,12 @@ void receive_sync(int msg_qid, Message *messaggio, int flag) {
 	}
 }
 
-/* create a mailbox */
+/**
+ * @brief Create a new mailbox
+ *
+ * @param chiave_msg key of the message queue
+ * 
+ */
 int get_mailbox(key_t *chiave_msg)
 {
 	int msg_qid;
@@ -329,7 +348,12 @@ int get_mailbox(key_t *chiave_msg)
 	return msg_qid;
 }
 
-/* remove a mailbox */
+/**
+ * @brief Remove the selected mailbox
+ *
+ * @param msg_qid ID of the queue to remove
+ * 
+ */
 void remove_mailbox(int msg_qid)
 {
 	char error_string[ERRMSG_MAX_LEN];
@@ -462,10 +486,13 @@ void leave_monitor(Monitor *mon) {
 	}
 }
 
-/* Routine wait_cond  / signal_cond:.
-inputs : Monitor *mon :  ;
-cond_num : index of the condition var */
-
+/**
+ * @brief Wait on a specified condition of Monitor
+ *
+ * @param mon pointer to the struct of the Monitor
+ * @param cond_num number of semaphore of the set associated to the condition to be considered
+ * 
+ */
 void wait_cond(Monitor *mon,int cond_num)
 {
 	int preempt_count;
@@ -491,6 +518,13 @@ void wait_cond(Monitor *mon,int cond_num)
 
 }
 
+/**
+ * @brief Signal on a specified condition of Monitor
+ *
+ * @param mon pointer to the struct of the Monitor
+ * @param cond_num number of semaphore of the set associated to the condition to be considered
+ * 
+ */
 void signal_cond(Monitor *mon,int cond_num)
 {
 	int is_empty = IS_queue_empty(mon, cond_num);
