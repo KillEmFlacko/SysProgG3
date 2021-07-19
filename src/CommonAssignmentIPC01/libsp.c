@@ -347,7 +347,7 @@ void receive_sync(int msg_qid, Message *messaggio, int flag) {
  * @brief Create a new mailbox
  *
  * @param chiave_msg key of the message queue
- * 
+ * @retval message queue id if all OK, -1 on error 
  */
 int get_mailbox(key_t *chiave_msg)
 {
