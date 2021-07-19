@@ -81,8 +81,5 @@ int main(int argc, char **argv)
     *   
     */
     mon = init_monitor(NCOND);
-    // Putting the condition variable of reader to 1. It means that only one reader
-    // can access to the resource
-    signal_cond(mon, S_WRITER);
     
 }
