@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/ipc.h>
+#include "CommonAssignmentIPC01/libsp.h"
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
