@@ -30,10 +30,12 @@
 
 /**
   @file libsp.c
+  @brief Library for CommonAssignmentIPC01
   */
 
 #include <asm-generic/errno-base.h>
 #include <asm-generic/errno.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -301,7 +303,14 @@ void send_sync(int msg_qid, Message *messaggio, int flag) {
 	}
 }
 
-/*async receive on a message queue*/
+/**
+ * @brief Receive an async message on a queue
+ *
+ * @param msg_qid message queue ID
+ * @param PTR_mess pointer to the structure of the message
+ * @param send_flag operation flags (MSG_EXCEPT, MSG_NOERROR)
+ * 
+ */
 void receive_async (int msg_qid, Message *PTR_mess, int receive_flag)
 {
 	char error_string[ERRMSG_MAX_LEN];
@@ -315,7 +324,14 @@ void receive_async (int msg_qid, Message *PTR_mess, int receive_flag)
 
 }
 
-/*sync send on a message queue*/
+/**
+ * @brief Receive a sync message on a queue
+ *
+ * @param msg_qid message queue ID
+ * @param message pointer to the structure of the message
+ * @param send_flag operation flags (MSG_EXCEPT, MSG_NOERROR)
+ * 
+ */
 void receive_sync(int msg_qid, Message *messaggio, int flag) {
 	int status;
 	char error_string[ERRMSG_MAX_LEN];

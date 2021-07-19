@@ -28,6 +28,8 @@
  * along with SysProgG3.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** @file libsp.h */
+
 #ifndef _LIBSP_H
 #define _LIBSP_H
 
@@ -40,21 +42,19 @@
 #define MAX_MSGQUEUE_LEN 128
 #define SEMPERM (S_IRUSR | S_IWUSR)
 
-#define LEN_MUTEX 2 // Number of semaphores in mutex set
-#define I_MUTEX 0   // Index of the mutex semaphore in the set
-#define I_PREEMPT 1 // Index of the preempt semaphore in the set (also called urgent)
+#define LEN_MUTEX 2 //!< Number of semaphores in mutex set
+#define I_MUTEX 0   //!< Index of the mutex semaphore in the set
+#define I_PREEMPT 1 //!< Index of the preempt semaphore in the set (also called urgent)
 
-#define KEY(k) (ftok(TMP_FILE,k)) // TODO: Creare file
+#define KEY(k) (ftok(TMP_FILE,k))
 
-/* Message struct  :
-   - type: Represents the type of the message
-   - data: Contains the text of the message
-*/
-
+/**
+ * @brief Struct of a message in the message queue
+ */
 typedef struct
 {
-   long type;
-   char data[MAX_MSGQUEUE_LEN];
+   long type; /**< Represents the type of the message */
+   char data[MAX_MSGQUEUE_LEN]; /**< Contains the text of the message */
 } Message;
 
 /* Request a shared memory */
@@ -88,11 +88,14 @@ void remove_mailbox(int msg_qid);
    ID VAR CONDITION Semaphore (sem)
    (in this version all conditions are associated to the same semaphore */
 
+/**
+ * @brief Monitor structure
+ */
 typedef struct
 {
-   int id_mutex;
-   int numcond;
-   int id_cond;
+   int id_mutex; /**< ID of the mutex and preempt semaphore */
+   int numcond; /**< Number of avaliable conditions  */
+   int id_cond; /**< ID of the condition semaphores */
 } Monitor;
 
 Monitor *init_monitor(int ncond); /*init  monitor :
