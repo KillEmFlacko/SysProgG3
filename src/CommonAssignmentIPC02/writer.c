@@ -8,7 +8,7 @@
 #define S_NUM_WRITERS 1
 #define S_NUM_READERS 2
 
-void write(Monitor *mon, int *val, int *nr, int *nw)
+void write(Monitor *mon, int *val, int *nr, int *nw, int new_val)
 {
     enter_monitor(mon);
 
@@ -26,7 +26,7 @@ void write(Monitor *mon, int *val, int *nr, int *nw)
     // Se non ci sono scrivo
     wait_cond(mon, S_WRITE);
     // Affinchè scriva non devono esserci neanche altri scrittori
-    printf("VALUE: %d", *val);
+    *val = new_val;
     *nw--;
     signal_cond(mon, S_WRITE);
     
