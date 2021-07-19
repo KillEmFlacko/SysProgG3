@@ -6,7 +6,7 @@
  * Francesco	Moscato	fmoscato@unisa.it
  *
  * Group:
- * D'Alessio	Simone
+ * D'Alessio	Simone		0622701120	s.dalessio8@studenti.unisa.it
  * Falanga		Armando		0622701140  a.falanga13@studenti.unisa.it
  * Fattore		Alessandro  0622701115  a.fattore@studenti.unisa.it
  *
