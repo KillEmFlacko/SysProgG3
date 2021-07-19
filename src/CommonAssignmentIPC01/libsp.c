@@ -515,7 +515,7 @@ void leave_monitor(Monitor *mon) {
  * @param cond_num number of semaphore of the set associated to the condition to be considered
  * 
  */
-void wait_cond(Monitor *mon,int cond_num)
+int wait_cond(Monitor *mon,int cond_num)
 {
 	int preempt_count;
 	char error_string[ERRMSG_MAX_LEN];
@@ -524,20 +524,42 @@ void wait_cond(Monitor *mon,int cond_num)
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"wait_cond(mon: %p, cond_num: %d) - Cannot wait on resource", mon, cond_num);
 		perror(error_string);
-		return;
+		return -1;
 	}
 
 	if (preempt_count > 0)
 	{
-		signal_sem(mon -> id_mutex, I_PREEMPT, 0);
+		if(signal_sem(mon -> id_mutex, I_PREEMPT, 0) == -1)
+		{
+			snprintf(error_string,ERRMSG_MAX_LEN,"wait_cond(mon: %p, cond_num: %d) - Cannot wait on resource", mon, cond_num);
+			perror(error_string);
+			return -1;
+		}
 	}
 	else
 	{
-		signal_sem(mon -> id_mutex, I_MUTEX, 0);
+		if(signal_sem(mon -> id_mutex, I_MUTEX, 0) == -1)
+		{
+			snprintf(error_string,ERRMSG_MAX_LEN,"wait_cond(mon: %p, cond_num: %d) - Cannot wait on resource", mon, cond_num);
+			perror(error_string);
+			return -1;
+		}
 	}
 
-	wait_sem(mon -> id_cond, cond_num, 0);
+	if(wait_sem(mon -> id_cond, cond_num, 0) == -1)
+	{
 
+		if (preempt_count > 0)
+		{
+			wait_sem(mon -> id_mutex, I_PREEMPT, 0);
+		}
+		else
+		{
+			wait_sem(mon -> id_mutex, I_MUTEX, 0);
+		}
+	}
+
+	return -1;
 }
 
 /**
