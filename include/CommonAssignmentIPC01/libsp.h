@@ -62,9 +62,9 @@ int get_shm(key_t *chiave, char **ptr_shared, int dim);
 /* Request a semaphore */
 int get_sem(key_t *chiave_sem, int numsem, int initsem);
 /* wait on the semaphore */
-void wait_sem(int id_sem, int numsem, int flag);
+int wait_sem(int id_sem, int numsem, int flag);
 /* signal on the semaphore */
-void signal_sem(int id_sem, int numsem, int flag);
+int signal_sem(int id_sem, int numsem, int flag);
 /* remove a shared memory */
 void remove_shm(int id_shared);
 /* remove a shared memory */
@@ -118,9 +118,9 @@ void leave_monitor(Monitor *mon);
 inputs : Monitor *mon :  ;
 cond_num : index of the condition var */
 
-void wait_cond(Monitor *mon, int cond_num);
+int wait_cond(Monitor *mon, int cond_num);
 
-void signal_cond(Monitor *mon, int cond_num);
+int signal_cond(Monitor *mon, int cond_num);
 
 /*Routine remove_monitor */
 void remove_monitor(Monitor *mon);

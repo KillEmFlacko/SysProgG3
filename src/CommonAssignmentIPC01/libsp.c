@@ -174,7 +174,7 @@ int get_sem (key_t *chiave_sem, int numsem, int initsem)
  * @param numsem index of the semaphore to call wait on (from 0 to sem_nsems-1)
  * @param flag operation flags (IPC_NOWAIT, SEM_UNDO)
  */
-void wait_sem (int id_sem, int numsem, int flag)
+int wait_sem (int id_sem, int numsem, int flag)
 {
 	int status = 0;
 	char error_string[ERRMSG_MAX_LEN];
@@ -193,7 +193,10 @@ void wait_sem (int id_sem, int numsem, int flag)
 		 */
 		snprintf(error_string,ERRMSG_MAX_LEN,"wait_sem(id_sem: %d,numsem: %d,flag: %d) - Cannot lock resources",id_sem,numsem,flag);
 		perror(error_string);
+		return -1;
 	}
+
+	return 0;
 }
 
 /**
@@ -203,7 +206,7 @@ void wait_sem (int id_sem, int numsem, int flag)
  * @param numsem index of the semaphore to signal (from 0 to sem_nsems-1)
  * @param flag operation flags (IPC_NOWAIT, SEM_UNDO)
  */
-void signal_sem (int id_sem, int numsem, int flag) {
+int signal_sem (int id_sem, int numsem, int flag) {
 	int status = 0;
 	char error_string[ERRMSG_MAX_LEN];
 
@@ -224,7 +227,10 @@ void signal_sem (int id_sem, int numsem, int flag) {
 		 */
 		snprintf(error_string,ERRMSG_MAX_LEN,"signal_sem(id_sem: %d,numsem: %d,flag: %d) - Cannot release resources",id_sem,numsem,flag);
 		perror(error_string);
+		return -1;
 	}
+
+	return 0;
 }
 
 /**
@@ -541,7 +547,7 @@ void wait_cond(Monitor *mon,int cond_num)
  * @param cond_num number of semaphore of the set associated to the condition to be considered
  * 
  */
-void signal_cond(Monitor *mon,int cond_num)
+int signal_cond(Monitor *mon,int cond_num)
 {
 	int is_empty = IS_queue_empty(mon, cond_num);
 	char error_string[ERRMSG_MAX_LEN];
@@ -549,14 +555,26 @@ void signal_cond(Monitor *mon,int cond_num)
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"signal_cond(mon: %p, cond_num: %d) - Cannot signal the selected semaphore", mon, cond_num);
 		perror(error_string);
-		return;
+		return -1;
 	}
 	if(!is_empty)
 	{
-		signal_sem(mon->id_cond, cond_num, 0);
-		wait_sem(mon->id_mutex, I_PREEMPT, 0);
+		if(signal_sem(mon->id_cond, cond_num, 0) == -1)
+		{
+			snprintf(error_string,ERRMSG_MAX_LEN,"signal_cond(mon: %p, cond_num: %d) - Cannot signal the selected semaphore", mon, cond_num);
+			perror(error_string);
+			return -1;
+		}
+		if(wait_sem(mon->id_mutex, I_PREEMPT, 0) == -1)
+		{
+			wait_sem(mon->id_cond,cond_num,0); // If signal is ok and we are in an atomic procedure no problem can occur on cond semaphore
+			snprintf(error_string,ERRMSG_MAX_LEN,"signal_cond(mon: %p, cond_num: %d) - Cannot signal the selected semaphore", mon, cond_num);
+			perror(error_string);
+			return -1;
+		}
 	}
 
+	return 0;
 }
 
 /**
