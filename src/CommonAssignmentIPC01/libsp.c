@@ -48,6 +48,66 @@
 
 #define ERRMSG_MAX_LEN 128
 
+// ---------- SUPERFAST HASH ----------
+// http://www.azillionmonkeys.com/qed/hash.html
+#include <stdint.h>
+#undef get16bits
+#if (defined(__GNUC__) && defined(__i386__)) || defined(__WATCOMC__) \
+  || defined(_MSC_VER) || defined (__BORLANDC__) || defined (__TURBOC__)
+#define get16bits(d) (*((const uint16_t *) (d)))
+#endif
+
+#if !defined (get16bits)
+#define get16bits(d) ((((uint32_t)(((const uint8_t *)(d))[1])) << 8)\
+                       +(uint32_t)(((const uint8_t *)(d))[0]) )
+#endif
+
+uint32_t SuperFastHash (const char * data, int len) {
+uint32_t hash = len, tmp;
+int rem;
+
+    if (len <= 0 || data == NULL) return 0;
+
+    rem = len & 3;
+    len >>= 2;
+
+    /* Main loop */
+    for (;len > 0; len--) {
+        hash  += get16bits (data);
+        tmp    = (get16bits (data+2) << 11) ^ hash;
+        hash   = (hash << 16) ^ tmp;
+        data  += 2*sizeof (uint16_t);
+        hash  += hash >> 11;
+    }
+
+    /* Handle end cases */
+    switch (rem) {
+        case 3: hash += get16bits (data);
+                hash ^= hash << 16;
+                hash ^= ((signed char)data[sizeof (uint16_t)]) << 18;
+                hash += hash >> 11;
+                break;
+        case 2: hash += get16bits (data);
+                hash ^= hash << 11;
+                hash += hash >> 17;
+                break;
+        case 1: hash += (signed char)*data;
+                hash ^= hash << 10;
+                hash += hash >> 1;
+    }
+
+    /* Force "avalanching" of final 127 bits */
+    hash ^= hash << 3;
+    hash += hash >> 5;
+    hash ^= hash << 4;
+    hash += hash >> 17;
+    hash ^= hash << 25;
+    hash += hash >> 6;
+
+    return hash;
+}
+// ------------------------------------
+
 /**
  * @brief Request a shared memory area and attach to process address space
  *
@@ -173,6 +233,7 @@ int get_sem (key_t *chiave_sem, int numsem, int initsem)
  * @param id_sem semaphore set ID
  * @param numsem index of the semaphore to call wait on (from 0 to sem_nsems-1)
  * @param flag operation flags (IPC_NOWAIT, SEM_UNDO)
+ * @retval 0 if all OK, -1 on error
  */
 int wait_sem (int id_sem, int numsem, int flag)
 {
@@ -188,9 +249,6 @@ int wait_sem (int id_sem, int numsem, int flag)
 
 	if(status == -1)
 	{
-		/*
-		 * TODO: Maybe you should specify the error type cheking errno
-		 */
 		snprintf(error_string,ERRMSG_MAX_LEN,"wait_sem(id_sem: %d,numsem: %d,flag: %d) - Cannot lock resources",id_sem,numsem,flag);
 		perror(error_string);
 		return -1;
@@ -205,6 +263,7 @@ int wait_sem (int id_sem, int numsem, int flag)
  * @param id_sem semaphore set ID
  * @param numsem index of the semaphore to signal (from 0 to sem_nsems-1)
  * @param flag operation flags (IPC_NOWAIT, SEM_UNDO)
+ * @retval 0 if all OK, -1 on error
  */
 int signal_sem (int id_sem, int numsem, int flag) {
 	int status = 0;
@@ -222,9 +281,6 @@ int signal_sem (int id_sem, int numsem, int flag) {
 		 * The same discussion holds for EAGAIN.
 		 */
 
-		/*
-		 * TODO: Maybe you should specify the error type cheking errno
-		 */
 		snprintf(error_string,ERRMSG_MAX_LEN,"signal_sem(id_sem: %d,numsem: %d,flag: %d) - Cannot release resources",id_sem,numsem,flag);
 		perror(error_string);
 		return -1;
@@ -478,7 +534,14 @@ Monitor *init_monitor(int ncond)
  * @param mon pointer to the monitor
  */
 void enter_monitor(Monitor *mon) {
-	wait_sem(mon->id_mutex,I_MUTEX,0);
+	char error_string[ERRMSG_MAX_LEN];
+
+	if(wait_sem(mon->id_mutex,I_MUTEX,0) == -1)
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"enter_monitor(mon: %p) - Cannot enter monitor",mon);
+		perror(error_string);
+		return;
+	}
 }
 
 /**
@@ -498,13 +561,23 @@ void leave_monitor(Monitor *mon) {
 		return;
 	}
 
-	if(preempt_count > 0)
+	if (preempt_count > 0)
 	{
-		signal_sem(mon->id_mutex,I_PREEMPT,0);
+		if(signal_sem(mon -> id_mutex, I_PREEMPT, 0) == -1)
+		{
+			snprintf(error_string,ERRMSG_MAX_LEN,"leave_monitor(mon: %p) - Cannot leave monitor",mon);
+			perror(error_string);
+			return;
+		}
 	}
 	else
 	{
-		signal_sem(mon->id_mutex,I_MUTEX,0);
+		if(signal_sem(mon -> id_mutex, I_MUTEX, 0) == -1)
+		{
+			snprintf(error_string,ERRMSG_MAX_LEN,"leave_monitor(mon: %p) - Cannot leave monitor",mon);
+			perror(error_string);
+			return;
+		}
 	}
 }
 
@@ -513,7 +586,7 @@ void leave_monitor(Monitor *mon) {
  *
  * @param mon pointer to the struct of the Monitor
  * @param cond_num number of semaphore of the set associated to the condition to be considered
- * 
+ * @retval 0 if all OK, -1 on error
  */
 int wait_cond(Monitor *mon,int cond_num)
 {
@@ -567,7 +640,7 @@ int wait_cond(Monitor *mon,int cond_num)
  *
  * @param mon pointer to the struct of the Monitor
  * @param cond_num number of semaphore of the set associated to the condition to be considered
- * 
+ * @retval 0 if all OK, -1 on error
  */
 int signal_cond(Monitor *mon,int cond_num)
 {
