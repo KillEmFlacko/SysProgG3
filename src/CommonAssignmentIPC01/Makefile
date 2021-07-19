@@ -56,9 +56,12 @@ $(DEPS_ABSPATH):
 	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D))
 
 # Recipe per gli object files
-$(BUILD)/$(MODULE_NAME)/%.o: %.c $(MY_INCLUDES)
+$(BUILD)/$(MODULE_NAME)/%.o: %.c $(MY_INCLUDES) $(TMP_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -I$(INCLUDE) -c -o $@ $(notdir $(basename $@)).c
+
+$(TMP_ABSPATH):
+	echo "ciccio" > $@
 
 clean: 
 	rm -f *~ *.bak $(BUILD)/$(MODULE_NAME)/*.o $(EXEC_ABSPATH)

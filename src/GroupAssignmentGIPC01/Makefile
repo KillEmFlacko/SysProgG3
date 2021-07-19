@@ -1,5 +1,5 @@
-# Set executable name and dependencies
-EXEC = program
+# Lista degli eseguibili da generare (vedi nelle recipe per la generazione)
+EXECS = program
 
 # Recupero il nome del modulo in analisi
 MODULE_NAME = $(notdir $(shell pwd))
@@ -27,9 +27,11 @@ DEPS_ABSPATH = \
 # Genero i nomi dei file oggetto
 OBJS = $(patsubst %.c,%.o,$(SRCS))
 
+BUILD_DIR = $(BUILD)/$(MODULE_NAME)
+BIN_DIR = $(BUILD_DIR)/bin
+
 # Genero le path assolute degli object file e dell'eseguibile
-OBJS_ABSPATH = $(addprefix $(BUILD)/$(MODULE_NAME)/,$(OBJS))
-EXEC_ABSPATH = $(BUILD)/$(MODULE_NAME)/bin/$(EXEC)
+EXECS_ABSPATH = $(addprefix $(BIN_DIR)/,$(EXECS))
 
 # Genero path relativa per gli include file del modulo
 INCLUDE_REL = $(shell realpath --relative-to . $(INCLUDE))
@@ -38,7 +40,7 @@ INCLUDE_REL = $(shell realpath --relative-to . $(INCLUDE))
 
 .PHONY: all clean
 
-all: $(EXEC_ABSPATH)
+all: $(EXECS_ABSPATH)
 
 depend:
 	makedepend -I $(INCLUDE_REL) $(SRCS) -Y /usr/include
@@ -46,8 +48,13 @@ depend:
 		$(MAKE) -C $$dir $@; \
 	done
 
-# Recipe per l'eseguibile
-$(EXEC_ABSPATH): $(OBJS_ABSPATH) $(DEPS_ABSPATH)
+# Template recipe per gli eseguibili
+#
+#$(BIN_DIR)/nome_eseguibile : $(BUILD_DIR)/main_eseguibile.o $(DEPS_ABSPATH)
+#	-mkdir -p $(dir $@)
+#	$(CC) $(LFLAGS) -o $@ $^
+
+$(BIN_DIR)/program : $(BUILD_DIR)/main.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
@@ -61,7 +68,7 @@ $(BUILD)/$(MODULE_NAME)/%.o: %.c $(MY_INCLUDES)
 	$(CC) $(CFLAGS) -I$(INCLUDE) -c -o $@ $(notdir $(basename $@)).c
 
 clean: 
-	rm -f *~ *.bak $(BUILD)/$(MODULE_NAME)/*.o $(EXEC_ABSPATH)
+	rm -f *~ *.bak $(BUILD)/$(MODULE_NAME)/*.o $(EXECS_ABSPATH)
 
 # DO NOT DELETE
 
