@@ -60,7 +60,7 @@ int deQueue(struct Queue* q)
 {
     // If queue is empty, return NULL.
     if (q->front == NULL)
-        return;
+        return NULL;
   
     // Store previous front and move front one node ahead
     struct QNode* temp = q->front;
@@ -161,7 +161,7 @@ void read(Monitor *mon, struct Queue *q, int *val, int *nr, int *nw)
     // Se non ci sono stampo
     printf("VALUE: %d", *val);
 
-    signal_wait(mon, S_NUM_READERS);
+    wait_cond(mon, S_NUM_READERS);
     *nr--;
     // L'ultimo lettore consente allo scrittore di procedere
     if (*nr == 0)
@@ -175,25 +175,48 @@ void read(Monitor *mon, struct Queue *q, int *val, int *nr, int *nw)
 
 int main(int argc, char **argv)
 {
-	key_t key;
+	key_t key0, key1, key2, key3;
     Monitor *mon;
-	int shmid;
+
+    /************************************
+    *   DA CONDIVIDERE CON SHM
+    */
 	int value = 0;
     int n_writers = 0;
     int n_readers = 0;
-
     struct Queue* q = createQueue();
+    /*
+    ************************************
+    */
 
     // Generating key for shared memory
-	if ((key = ftok(".", 100)) == -1) { perror("ftok"); exit(1); }
+	if ((key0 = ftok(".", 100)) == -1) { perror("ftok"); exit(1); }
+    if ((key1 = ftok(".", 101)) == -1) { perror("ftok"); exit(1); }
+    if ((key2 = ftok(".", 102)) == -1) { perror("ftok"); exit(1); }
+    if ((key3 = ftok(".", 103)) == -1) { perror("ftok"); exit(1); }
 
-    // Obtaining shared memory ID
-    shmid = get_shm(&key, &value, sizeof(int));
+    // Attach shared memory to data
+    get_shm(&key0, &value, sizeof(int));
+    get_shm(&key1, &n_writers, sizeof(int));
+    get_shm(&key2, &n_readers, sizeof(int));
+    get_shm(&key3, q, sizeof(struct Queue));
 
     // Initializing a monitor with 4 condition variable
-    /*
-    *   
-    */
     mon = init_monitor(NCOND);
+
+    int num = 0;
+
+    if (fork() == 0)
+    {
+        read(mon, q, &value, &n_readers, &n_writers);
+        sleep(4);
+        read(mon, q, &value, &n_readers, &n_writers);
+    }
+    else
+    {
+        num++;
+        sleep(1);
+        write(mon, q, &value, &n_readers, &n_writers, num);
+    }
     
 }
