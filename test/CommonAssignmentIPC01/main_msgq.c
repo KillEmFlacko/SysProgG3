@@ -94,45 +94,32 @@ int main(int argc, char **argv){
 		 */
 		msg.type = 3;
 		strcpy(msg.data,TEST_STR);
-		send_sync(msg_qid,&msg,0);
+		assert(send_sync(msg_qid,&msg,0) != -1);
 
 #ifdef DEBUG
 	fprintf(stderr,"PARENT: sent message on queue\n");
 #endif
 
 		/*
-		 * Check if message have been added in the queue
-		 */
-		assert((status = msgctl(msg_qid,IPC_STAT,&buffer)) != -1); 
-		assert(buffer.msg_qnum == 1);
-
-		/*
-		 * Resume child execution
-		 */
-		kill(child,SIGCONT);
-
-		/*
 		 * Wait for a message
 		 */
 		msg.type = 2;
 		strcpy(msg.data,"---");
-		receive_sync(msg_qid,&msg,0);
+		assert(receive_sync(msg_qid,&msg,0) != -1);
 
-		/*
-		 * Last message on queue, check for queue status
-		 * and message correctness.
-		 */
-		assert((status = msgctl(msg_qid,IPC_STAT,&buffer)) != -1); 
-		assert(buffer.msg_qnum == 0);
 		assert(strcmp(msg.data,TEST_STR) == 0);
-
-		remove_mailbox(msg_qid);
 
 		/*
 		 * Check for child return value.
 		 */
 		int retval;
 		wait(&retval);
+
+		/*
+		 * Child ended, mailbox can be closed
+		 */
+		remove_mailbox(msg_qid);
+
 		if(retval == EXIT_SUCCESS)
 		{
 			printf(ANSI_COLOR_RESET"["ANSI_COLOR_YELLOW"%s"ANSI_COLOR_RESET"] "SUCCESS_MESSAGE,basename(argv[0]));
@@ -149,11 +136,6 @@ int main(int argc, char **argv){
 		/*
 		 * CHILD
 		 */
-
-		/*
-		 * Wait for OK from the parent
-		 */
-		kill(getpid(),SIGSTOP);
 		
 		/*
 		 * Receive message from the parent
@@ -162,14 +144,13 @@ int main(int argc, char **argv){
 	fprintf(stderr,"CHILD: reading from msgqueue\n");
 #endif
 		msg.type = 3;
-		receive_async(msg_qid,&msg,0); // No need to wait
+		assert(receive_sync(msg_qid,&msg,0) != -1);
 
-		assert((status = msgctl(msg_qid,IPC_STAT,&buffer)) != -1); 
-		assert(buffer.msg_qnum == 0);
-		assert(strcmp(msg.data,TEST_STR) == 0);
-
+		/*
+		 * Send the same message but on another channel
+		 */
 		msg.type = 2;
-		send_sync(msg_qid,&msg,0);
+		assert(send_sync(msg_qid,&msg,0) != -1);
 
 		exit(EXIT_SUCCESS);
 	}

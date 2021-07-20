@@ -37,13 +37,13 @@
 #include <asm-generic/errno.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <string.h>
 #include <sys/msg.h>
 #include <sys/types.h>
-#ifdef DEBUG
 #include <unistd.h>
-#endif
 #include "CommonAssignmentIPC01/libsp.h"
 
 #define ERRMSG_MAX_LEN 128
@@ -333,7 +333,7 @@ void remove_sem (int id_sem) {
  * @param send_flag operation flags (MSG_EXCEPT, MSG_NOERROR)
  * 
  */
-void send_async(int msg_qid, Message *PTR_mess, int send_flag)
+int send_async(int msg_qid, Message *PTR_mess, int send_flag)
 {
 	char error_string[ERRMSG_MAX_LEN];
 
@@ -341,28 +341,73 @@ void send_async(int msg_qid, Message *PTR_mess, int send_flag)
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"send_async(msg_qid: %d, PTR_mess: %p, send_flag: %d) - Cannot send an asynchronous message", msg_qid, PTR_mess, send_flag);
 		perror(error_string);
-		return;
+		return -1;
 	}
-
+	return 0;
 }
 
 /**
  * @brief Send a sync message on a queue
  *
  * @param msg_qid message queue ID
- * @param message pointer to the structure of the message
- * @param send_flag operation flags (MSG_EXCEPT, MSG_NOERROR)
+ * @param messaggio pointer to the structure of the message
+ * @param flag operation flags (MSG_EXCEPT, MSG_NOERROR)
  * 
  */
-void send_sync(int msg_qid, Message *messaggio, int flag) {
+int send_sync(int msg_qid, Message *messaggio, int flag) {
 	int status;
 	char error_string[ERRMSG_MAX_LEN];
 
-	if((status = msgsnd(msg_qid,messaggio,MAX_MSGQUEUE_LEN,flag)) == -1)
+	/*
+	 * Actual message to send, pid of the sender in the message
+	 */
+	Message act_msg;
+	act_msg.type = messaggio->type;
+	snprintf(act_msg.data,MAX_MSGQUEUE_LEN,"%d-%s",getpid(),messaggio->data);
+
+	if((status = msgsnd(msg_qid,&act_msg,MAX_MSGQUEUE_LEN,flag)) == -1)
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"send_sync(msg_qid: %d, messaggio: %p, flag: %d) - Cannot send message",msg_qid,messaggio,flag);
 		perror(error_string);
+		return -1;
 	}
+
+	/*
+	 * Computing message hash for ack
+	 */
+	int ack_value = SuperFastHash(messaggio->data,strlen(messaggio->data));
+	int hex_string_len = sizeof(int)*2+2;
+	char *ack_string = (char*)malloc((hex_string_len + 1)*sizeof(char));
+	sprintf(ack_string,"%#x",ack_value);
+	
+	/*
+	 * waiting for message received
+	 */
+	kill(getpid(),SIGSTOP);
+
+	/*
+	 * Rcv the ack
+	 */
+	Message ack;
+	if((status = msgrcv(msg_qid,&ack,MAX_MSGQUEUE_LEN,messaggio->type,0)) == -1)
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"send_sync(msg_qid: %d, messaggio: %p, flag: %d) - No ACK received",msg_qid,messaggio,flag);
+		perror(error_string);
+		return -1;
+	}
+
+	/*
+	 * Check the ack
+	 */
+	if(strncmp(ack.data,ack_string,hex_string_len) != 0)
+	{
+		fprintf(stderr,"send_sync(msg_qid: %d, messaggio: %p, flag: %d) - Invalid ACK\n",msg_qid,messaggio,flag);
+		return -1;
+	}
+
+	free(ack_string);
+
+	return 0;
 }
 
 /**
@@ -370,10 +415,10 @@ void send_sync(int msg_qid, Message *messaggio, int flag) {
  *
  * @param msg_qid message queue ID
  * @param PTR_mess pointer to the structure of the message
- * @param send_flag operation flags (MSG_EXCEPT, MSG_NOERROR)
+ * @param receive_flag operation flags (MSG_EXCEPT, MSG_NOERROR)
  * 
  */
-void receive_async (int msg_qid, Message *PTR_mess, int receive_flag)
+int receive_async (int msg_qid, Message *PTR_mess, int receive_flag)
 {
 	char error_string[ERRMSG_MAX_LEN];
 
@@ -381,28 +426,61 @@ void receive_async (int msg_qid, Message *PTR_mess, int receive_flag)
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"receive_async(msg_qid: %d, PTR_mess: %p, receive_flag: %d) - Cannot receive an asynchronous message", msg_qid, PTR_mess, receive_flag);
 		perror(error_string);
-		return;
+		return -1;
 	}
-
+	return 0;
 }
 
 /**
  * @brief Receive a sync message on a queue
  *
  * @param msg_qid message queue ID
- * @param message pointer to the structure of the message
- * @param send_flag operation flags (MSG_EXCEPT, MSG_NOERROR)
+ * @param messaggio pointer to the structure of the message
+ * @param flag operation flags (MSG_EXCEPT, MSG_NOERROR)
  * 
  */
-void receive_sync(int msg_qid, Message *messaggio, int flag) {
+int receive_sync(int msg_qid, Message *messaggio, int flag) {
 	int status;
 	char error_string[ERRMSG_MAX_LEN];
 
-	if((status = msgrcv(msg_qid,messaggio,MAX_MSGQUEUE_LEN,messaggio->type,flag)) == -1)
+	/*
+	 * Rcv the actual message
+	 */
+	Message act_msg;
+	if((status = msgrcv(msg_qid,&act_msg,MAX_MSGQUEUE_LEN,\
+					messaggio->type,flag)) == -1)
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"receive_sync(msg_qid: %d, messaggio: %p, flag: %d) - Cannot receive message",msg_qid,messaggio,flag);
 		perror(error_string);
+		return -1;
 	}
+
+	/*
+	 * Separate sender pid from the actual message
+	 */
+	pid_t to_cont;
+	sscanf(act_msg.data,"%d-%s",&to_cont,messaggio->data);
+
+	/*
+	 * Compute and send ack as a string
+	 */
+	Message ack;
+	ack.type = messaggio->type;
+	int ack_value = SuperFastHash(messaggio->data,strlen(messaggio->data));
+	sprintf(ack.data,"%#x",ack_value);
+
+	if((status = msgsnd(msg_qid,&ack,MAX_MSGQUEUE_LEN,0)) == -1)
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"receive_sync(msg_qid: %d, messaggio: %p, flag: %d) - Cannot send ACK",msg_qid,messaggio,flag);
+		perror(error_string);
+		return -1;
+	}
+
+	/*
+	 * Wake up the sender
+	 */
+	kill(to_cont,SIGCONT);
+	return 0;
 }
 
 /**
