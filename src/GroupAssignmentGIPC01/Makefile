@@ -14,7 +14,7 @@ MY_INCLUDES = \
 	 )
 
 # Trasformo gli include in moduli di dipendenza 
-DEPS = $(filter-out /$(MODULE_NAME)/, $(dir $(patsubst $(INCLUDE)%,%,$(MY_INCLUDES))))
+DEPS = $(sort $(filter-out /$(MODULE_NAME)/, $(dir $(patsubst $(INCLUDE)%,%,$(MY_INCLUDES)))))
 
 # Genero le path assolute dei relativi file oggetto
 DEPS_ABSPATH = \
