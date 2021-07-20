@@ -538,7 +538,7 @@ Monitor *init_monitor(int ncond)
 	 *	- The first semaphore is related to the mutex that garantee the access to the monitor
 	 *	- The second semaphore is related to preemption
 	 */
-	key_t key_mutex = KEY(1);
+	key_t key_mutex = IPC_PRIVATE;
 	if(key_mutex == -1)
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(ncond: %d) - Cannot generate mutex key",ncond);
@@ -573,7 +573,7 @@ Monitor *init_monitor(int ncond)
 	/*
 	 * 	Creation of a semaphore set with ncond semaphore. All are initialized to 0
 	 */
-	key_t key_cond = KEY(2);
+	key_t key_cond = IPC_PRIVATE;
 	if(key_cond == -1)
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(ncond: %d) - Cannot generate condition variables key",ncond);
