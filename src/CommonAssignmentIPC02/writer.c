@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "lib/lib.h"
 #include "CommonAssignmentIPC01/libsp.h"
 
-#define NCOND 3
+#define NCOND 4
 #define S_WRITE 0
 #define S_NUM_WRITERS 1
 #define S_NUM_READERS 2
@@ -189,17 +190,29 @@ int main(int argc, char **argv)
     ************************************
     */
 
+#ifdef DEBUG
+    fpritnf(stderr,"Generating keys...\n");
+#endif
+
     // Generating key for shared memory
 	if ((key0 = ftok(".", 100)) == -1) { perror("ftok"); exit(1); }
     if ((key1 = ftok(".", 101)) == -1) { perror("ftok"); exit(1); }
     if ((key2 = ftok(".", 102)) == -1) { perror("ftok"); exit(1); }
     if ((key3 = ftok(".", 103)) == -1) { perror("ftok"); exit(1); }
 
+#ifdef DEBUG
+    fpritnf(stderr,"Initializing shm...\n");
+#endif
+
     // Attach shared memory to data
     get_shm(&key0, &value, sizeof(int));
     get_shm(&key1, &n_writers, sizeof(int));
     get_shm(&key2, &n_readers, sizeof(int));
     get_shm(&key3, q, sizeof(struct Queue));
+
+#ifdef DEBUG
+    fpritnf(stderr,"Initializing monitor...\n");
+#endif
 
     // Initializing a monitor with 4 condition variable
     mon = init_monitor(NCOND);
@@ -208,12 +221,18 @@ int main(int argc, char **argv)
 
     if (fork() == 0)
     {
+#ifdef DEBUG
+        fprintf(stderr,"SONS START\n");
+#endif
         read(mon, q, &value, &n_readers, &n_writers);
         sleep(4);
         read(mon, q, &value, &n_readers, &n_writers);
     }
     else
     {
+#ifdef DEBUG
+        fprintf(stderr,"FATHER START\n");
+#endif
         num++;
         sleep(1);
         write(mon, q, &value, &n_readers, &n_writers, num);
