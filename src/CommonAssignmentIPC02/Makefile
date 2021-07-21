@@ -64,7 +64,7 @@ $(BIN_DIR)/consumer : $(BUILD_DIR)/main_cons.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
-$(BIN_DIR)/reader : $(BUILD_DIR)/readwrite.o $(DEPS_ABSPATH)
+$(BIN_DIR)/readwrite : $(BUILD_DIR)/readwrite.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
