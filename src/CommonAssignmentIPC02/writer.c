@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "lib/lib.h"
+#include <limits.h>
 #include "CommonAssignmentIPC01/libsp.h"
 
 #define NCOND 4
@@ -61,7 +61,7 @@ int deQueue(struct Queue* q)
 {
     // If queue is empty, return NULL.
     if (q->front == NULL)
-        return NULL;
+        return INT_MIN;
   
     // Store previous front and move front one node ahead
     struct QNode* temp = q->front;
@@ -79,15 +79,16 @@ int deQueue(struct Queue* q)
     return key;
 }
 
-void write(Monitor *mon, struct Queue *q, int *val, int *nr, int *nw, int new_val)
+void write_procedure(Monitor *mon, struct Queue *q, int *val, int *nr, int *nw, int new_val)
 {
-    int n_readers, n_writers;
+	// WARNING: UNUSED VARIABLES
+    //int n_readers, n_writers;
 
     enter_monitor(mon);
 
     // Mi metto in coda per la scrittura
     wait_cond(mon, S_NUM_WRITERS);
-    *nw++;
+    (*nw)++;
     signal_cond(mon, S_NUM_WRITERS);
     
     // Azzero la coda di lettori in attesa
@@ -107,13 +108,13 @@ void write(Monitor *mon, struct Queue *q, int *val, int *nr, int *nw, int new_va
 
     // Decremento il numero di scrittori
     wait_cond(mon, S_NUM_WRITERS);
-    *nw--;
+    (*nw)--;
     signal_cond(mon, S_NUM_WRITERS);
     
     leave_monitor(mon);
 }
 
-void read(Monitor *mon, struct Queue *q, int *val, int *nr, int *nw)
+void read_procedure(Monitor *mon, struct Queue *q, int *val, int *nr, int *nw)
 {
     int n_readers, n_writers;
 
@@ -163,7 +164,7 @@ void read(Monitor *mon, struct Queue *q, int *val, int *nr, int *nw)
     printf("VALUE: %d", *val);
 
     wait_cond(mon, S_NUM_READERS);
-    *nr--;
+    (*nr)--;
     // L'ultimo lettore consente allo scrittore di procedere
     if (*nr == 0)
     {
@@ -182,10 +183,10 @@ int main(int argc, char **argv)
     /************************************
     *   DA CONDIVIDERE CON SHM
     */
-	int value = 0;
-    int n_writers = 0;
-    int n_readers = 0;
-    struct Queue* q = createQueue();
+	int *value;
+    int *n_writers;
+    int *n_readers;
+    struct Queue* q;
     /*
     ************************************
     */
@@ -205,13 +206,18 @@ int main(int argc, char **argv)
 #endif
 
     // Attach shared memory to data
-    get_shm(&key0, &value, sizeof(int));
-    get_shm(&key1, &n_writers, sizeof(int));
-    get_shm(&key2, &n_readers, sizeof(int));
-    get_shm(&key3, q, sizeof(struct Queue));
+    get_shm(&key0, (char**)&value, sizeof(int));
+    get_shm(&key1, (char**)&n_writers, sizeof(int));
+    get_shm(&key2, (char**)&n_readers, sizeof(int));
+    get_shm(&key3, (char**)&q, sizeof(struct Queue));
+
+	*value = 0;
+	*n_writers = 0;
+	*n_readers = 0;
+	q = createQueue();
 
 #ifdef DEBUG
-    fpritnf(stderr,"Initializing monitor...\n");
+    fprintf(stderr,"Initializing monitor...\n");
 #endif
 
     // Initializing a monitor with 4 condition variable
@@ -224,9 +230,9 @@ int main(int argc, char **argv)
 #ifdef DEBUG
         fprintf(stderr,"SONS START\n");
 #endif
-        read(mon, q, &value, &n_readers, &n_writers);
+        read_procedure(mon, q, value, n_readers, n_writers);
         sleep(4);
-        read(mon, q, &value, &n_readers, &n_writers);
+        read_procedure(mon, q, value, n_readers, n_writers);
     }
     else
     {
@@ -235,7 +241,7 @@ int main(int argc, char **argv)
 #endif
         num++;
         sleep(1);
-        write(mon, q, &value, &n_readers, &n_writers, num);
+        write_procedure(mon, q, value, n_readers, n_writers, num);
     }
     
 }
