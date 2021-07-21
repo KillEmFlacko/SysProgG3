@@ -1,5 +1,5 @@
 # Lista degli eseguibili da generare (vedi nelle recipe per la generazione)
-EXECS = producer consumer producer_array consumer_array reader writer
+EXECS = producer consumer producer_array consumer_array readwrite
 
 # Recupero il nome del modulo in analisi
 MODULE_NAME = $(notdir $(shell pwd))
@@ -72,15 +72,12 @@ $(BIN_DIR)/consumer_array : $(BUILD_DIR)/main_cons_array.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
-$(BIN_DIR)/reader : $(BUILD_DIR)/reader.o $(DEPS_ABSPATH)
-	-mkdir -p $(dir $@)
-	$(CC) $(LFLAGS) -o $@ $^
-
-$(BIN_DIR)/writer : $(BUILD_DIR)/writer.o $(DEPS_ABSPATH)
+$(BIN_DIR)/readwrite : $(BUILD_DIR)/readwrite.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
 $(BUILD_DIR)/tmp.key:
+	-mkdir -p $(dir $@)
 	echo "Ciccio" > $@
 
 # Gestione delle dipendenze
