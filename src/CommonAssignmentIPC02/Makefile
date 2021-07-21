@@ -1,5 +1,5 @@
 # Lista degli eseguibili da generare (vedi nelle recipe per la generazione)
-EXECS = producer consumer
+EXECS = producer consumer reader writer
 
 # Recupero il nome del modulo in analisi
 MODULE_NAME = $(notdir $(shell pwd))
@@ -62,6 +62,14 @@ $(BIN_DIR)/consumer : $(BUILD_DIR)/main_cons.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
+$(BIN_DIR)/reader : $(BUILD_DIR)/reader.o $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $^
+
+$(BIN_DIR)/writer : $(BUILD_DIR)/writer.o $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $^
+
 # Gestione delle dipendenze
 $(DEPS_ABSPATH):
 	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D))
@@ -78,3 +86,5 @@ clean:
 
 main_cons.o: ../../include/lib/lib.h
 main_prod.o: ../../include/lib/lib.h
+reader.o: ../../include/lib/lib.h
+writer.o: ../../include/lib/lib.h

@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include "lib/lib.h"
 
-int main(int argc, char **argv){
+int main(int argc, char **argv)
+{
 	int a=0,b=0;
 
 	if(argc >= 2)
