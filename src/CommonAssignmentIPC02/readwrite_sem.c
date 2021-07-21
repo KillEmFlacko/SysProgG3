@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "libsp.h"
+#include "CommonAssignmentIPC01/libsp.h"
+#include "lib/lib.h"
 
 #define NCOND 4
 #define S_WRITE 0
@@ -37,40 +38,14 @@ int push(BatchReaders* b, int val)
 
 int pop(BatchReaders* b)
 {
-<<<<<<< HEAD
     if (b -> num_elements == 0) return 0;
     int returnValue = b -> batch [b -> back];
     b -> back = (b -> back + 1) % BUFFER_SIZE;
     return returnValue;
-=======
-    // If queue is empty, return NULL.
-    if (q->front == NULL)
-        return INT_MIN;
-  
-    // Store previous front and move front one node ahead
-    struct QNode* temp = q->front;
-
-    int key = temp->key;
-  
-    q->front = q->front->next;
-  
-    // If front becomes NULL, then change rear also as NULL
-    if (q->front == NULL)
-        q->rear = NULL;
-  
-    free(temp);
-
-    return key;
->>>>>>> 63ebfa8e1d4e816acdc279da48d6020380e4ec0b
 }
 
 void writer(Monitor *mon, BatchReaders *b, int *val, int *nr, int *nw, int new_val)
 {
-<<<<<<< HEAD
-=======
-	// WARNING: UNUSED VARIABLES
-    //int n_readers, n_writers;
->>>>>>> 63ebfa8e1d4e816acdc279da48d6020380e4ec0b
 
     //enter_monitor(mon);
     printf("### INIZIO PROCESSO SCRITTURA ###\n");
@@ -176,10 +151,6 @@ void reader(Monitor *mon, BatchReaders *b, int *val, int *nr, int *nw)
     printf("VALUE: %d\n", *val);
 
     wait_sem(mon -> id_cond, S_NUM_READERS, 0);
-<<<<<<< HEAD
-=======
-    (*nr)--;
->>>>>>> 63ebfa8e1d4e816acdc279da48d6020380e4ec0b
     // L'ultimo lettore consente allo scrittore di procedere
     if (--(*nr) == 0)
     {
@@ -200,17 +171,10 @@ int main(int argc, char **argv)
     /************************************
     *   DA CONDIVIDERE CON SHM
     */
-<<<<<<< HEAD
 	int *value = 0;
     int *n_writers = 0;
     int *n_readers = 0;
     BatchReaders* b = initBatchReaders();
-=======
-	int *value;
-    int *n_writers;
-    int *n_readers;
-    struct Queue *q;
->>>>>>> 63ebfa8e1d4e816acdc279da48d6020380e4ec0b
     /*
     ************************************
     */
@@ -226,24 +190,16 @@ int main(int argc, char **argv)
     fprintf(stdout,"Initializing shm...\n");
 
     // Attach shared memory to data
-<<<<<<< HEAD
     get_shm(&key0, &value, sizeof(int));
     get_shm(&key1, &n_writers, sizeof(int));
     get_shm(&key2, &n_readers, sizeof(int));
     printf("Adesso provo a creare la coda in shm...\n");
     get_shm(&key3, b, sizeof(BatchReaders));
-=======
-    get_shm(&key0, (char**)&value, sizeof(int));
-    get_shm(&key1, (char**)&n_writers, sizeof(int));
-    get_shm(&key2, (char**)&n_readers, sizeof(int));
-    get_shm(&key3, (char**)&q, sizeof(struct Queue));
->>>>>>> 63ebfa8e1d4e816acdc279da48d6020380e4ec0b
 
     // Reset value in case of existing shm
     *value = 0;
     *n_writers = 0;
     *n_readers = 0;
-    q = createQueue();
 
     fprintf(stdout,"Initializing monitor...\n");
 
