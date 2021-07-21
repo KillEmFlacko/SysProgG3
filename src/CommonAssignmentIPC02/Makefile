@@ -89,7 +89,7 @@ clean:
 
 # DO NOT DELETE
 
-main_cons.o: ../../include/lib/lib.h
-main_prod.o: ../../include/lib/lib.h
+main_cons.o: ../../include/CommonAssignmentIPC01/libsp.h
+main_prod.o: ../../include/CommonAssignmentIPC01/libsp.h
 reader.o: ../../include/lib/lib.h
 writer.o: ../../include/lib/lib.h ../../include/CommonAssignmentIPC01/libsp.h
