@@ -1,5 +1,5 @@
 # Lista degli eseguibili da generare (vedi nelle recipe per la generazione)
-EXECS = producer consumer readwrite
+EXECS = producer consumer producer_array consumer_array readwrite
 
 # Recupero il nome del modulo in analisi
 MODULE_NAME = $(notdir $(shell pwd))
@@ -64,11 +64,20 @@ $(BIN_DIR)/consumer : $(BUILD_DIR)/main_cons.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
+$(BIN_DIR)/producer_array : $(BUILD_DIR)/main_prod_array.o $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $^
+
+$(BIN_DIR)/consumer_array : $(BUILD_DIR)/main_cons_array.o $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $^
+
 $(BIN_DIR)/readwrite : $(BUILD_DIR)/readwrite.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
 $(BUILD_DIR)/tmp.key:
+	-mkdir -p $(dir $@)
 	echo "Ciccio" > $@
 
 # Gestione delle dipendenze
@@ -85,6 +94,11 @@ clean:
 
 # DO NOT DELETE
 
-main_cons.o: ../../include/lib/lib.h
-main_prod.o: ../../include/lib/lib.h
+main_cons_array.o: ../../include/CommonAssignmentIPC01/libsp.h
+main_cons.o: ../../include/CommonAssignmentIPC01/libsp.h
+main_prod_array.o: ../../include/CommonAssignmentIPC01/libsp.h
+main_prod.o: ../../include/CommonAssignmentIPC01/libsp.h
+readwrite.o: ../../include/CommonAssignmentIPC01/libsp.h
 readwrite.o: ../../include/lib/lib.h
+readwrite_sem.o: ../../include/CommonAssignmentIPC01/libsp.h
+readwrite_sem.o: ../../include/lib/lib.h

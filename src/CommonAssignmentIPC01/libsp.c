@@ -188,21 +188,22 @@ int get_sem (key_t *chiave_sem, int numsem, int initsem)
 	char error_string[ERRMSG_MAX_LEN];
 
 	// Check if the semaphore exists
-	if ((semid = semget(*chiave_sem, numsem, SEMPERM)) == -1)
+	if((semid = semget(*chiave_sem,numsem,SEMPERM | IPC_CREAT | IPC_EXCL)) == -1)
 	{
-		if(errno == ENOENT) {
+		if(errno == EEXIST) {
 			/*
-			 * If the semaphore set does not exist
-			 * create a new semaphore set
+			 * If a semaphore set exist
+			 * return that set
 			 */
-			if ((semid = semget(*chiave_sem, numsem, IPC_CREAT | IPC_EXCL | SEMPERM)) == -1) {
+			if ((semid = semget(*chiave_sem, numsem, SEMPERM)) == -1) {
 				snprintf(error_string,ERRMSG_MAX_LEN,"get_sem(chiave_sem: %p,numsem: %d,initsem: %d) - Cannot create semaphore set",chiave_sem,numsem,initsem);
 				perror(error_string);
 				return -1;
 			}
+			return semid;
 		} else {
 			/*
-			 * Semaphore set exists but something went wrong
+			 * Cannot retrieve/create semaphore set
 			 */
 			snprintf(error_string,ERRMSG_MAX_LEN,"get_sem(chiave_sem: %p,numsem: %d,initsem: %d) - Cannot retrieve semaphore set",chiave_sem,numsem,initsem);
 			perror(error_string);

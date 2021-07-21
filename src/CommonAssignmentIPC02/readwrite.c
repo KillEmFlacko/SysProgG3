@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 #include "CommonAssignmentIPC01/libsp.h"
 #include "lib/lib.h"
 
@@ -61,7 +62,7 @@ int deQueue(struct Queue* q)
 {
     // If queue is empty, return NULL.
     if (q->front == NULL)
-        return NULL;
+        return INT_MIN;
   
     // Store previous front and move front one node ahead
     struct QNode* temp = q->front;
@@ -81,7 +82,8 @@ int deQueue(struct Queue* q)
 
 void writer(Monitor *mon, struct Queue *q, int *val, int *nr, int *nw, int new_val)
 {
-    int n_readers, n_writers;
+	// WARNING: UNUSED VARIABLES
+    //int n_readers, n_writers;
 
     enter_monitor(mon);
     printf("### INIZIO PROCESSO SCRITTURA ###\n");
@@ -169,7 +171,7 @@ void reader(Monitor *mon, struct Queue *q, int *val, int *nr, int *nw)
     printf("VALUE: %d\n", *val);
 
     wait_cond(mon, S_NUM_READERS);
-    *nr--;
+    (*nr)--;
     // L'ultimo lettore consente allo scrittore di procedere
     if (*nr == 0)
     {
@@ -189,10 +191,10 @@ int main(int argc, char **argv)
     /************************************
     *   DA CONDIVIDERE CON SHM
     */
-	int *value = 0;
-    int *n_writers = 0;
-    int *n_readers = 0;
-    struct Queue* q = createQueue();
+	int *value;
+    int *n_writers;
+    int *n_readers;
+    struct Queue* q;
     /*
     ************************************
     */
@@ -208,17 +210,19 @@ int main(int argc, char **argv)
     fprintf(stdout,"Initializing shm...\n");
 
     // Attach shared memory to data
-    get_shm(&key0, &value, sizeof(int));
-    get_shm(&key1, &n_writers, sizeof(int));
-    get_shm(&key2, &n_readers, sizeof(int));
-    get_shm(&key3, q, sizeof(struct Queue));
+    get_shm(&key0, (char**)&value, sizeof(int));
+    get_shm(&key1, (char**)&n_writers, sizeof(int));
+    get_shm(&key2, (char**)&n_readers, sizeof(int));
+    get_shm(&key3, (char**)&q, sizeof(struct Queue));
 
-    // Reset value in case of existing shm
-    *value = 0;
-    *n_writers = 0;
-    *n_readers = 0;
+	*value = 0;
+	*n_writers = 0;
+	*n_readers = 0;
+	q = createQueue();
 
-    fprintf(stdout,"Initializing monitor...\n");
+#ifdef DEBUG
+    fprintf(stderr,"Initializing monitor...\n");
+#endif
 
     // Initializing a monitor with 4 condition variable
     mon = init_monitor(NCOND);

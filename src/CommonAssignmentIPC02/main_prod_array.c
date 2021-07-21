@@ -3,9 +3,6 @@
 #include <time.h>
 #include "CommonAssignmentIPC01/libsp.h"
 
-#define NOTFULL_SEM 1
-#define NOTEMPTY_SEM 0
-
 int id_sem_notfull = -1, id_sem_notempty = -1, id_shared = -1;
 
 void exit_procedure(void)
@@ -22,6 +19,14 @@ int main(int argc, char **argv)
 {
 	atexit(exit_procedure);
 
+	if(argc < 2)
+	{
+		fprintf(stderr,"Usage:\t%s num_res\n",argv[0]);
+		exit(EXIT_FAILURE);
+	}
+
+	int nres = atoi(argv[1]);
+	
 	key_t key_shm = ftok(KEY_FILE,1);
 	key_t key_notfull = ftok(KEY_FILE,2);
 	key_t key_notempty = ftok(KEY_FILE,3);
@@ -29,7 +34,7 @@ int main(int argc, char **argv)
 	/*
 	 * Create semaphore set for NOTFULL
 	 */
-	if((id_sem_notfull = get_sem(&key_notfull,1,1)) == -1)
+	if((id_sem_notfull = get_sem(&key_notfull,nres,1)) == -1)
 	{
 		fprintf(stderr,"Cannot get notfull semaphore\n");
 		exit(EXIT_FAILURE);
@@ -38,7 +43,7 @@ int main(int argc, char **argv)
 	/*
 	 * Create semaphore set for NOTEMPTY
 	 */
-	if((id_sem_notempty = get_sem(&key_notempty,1,0)) == -1)
+	if((id_sem_notempty = get_sem(&key_notempty,nres,0)) == -1)
 	{
 		fprintf(stderr,"Cannot get notempty semaphore\n");
 		exit(EXIT_FAILURE);
@@ -48,7 +53,7 @@ int main(int argc, char **argv)
 	 * Create and attach shared memory area
 	 */
 	int* shm_addr;
-	if((id_shared = get_shm(&key_shm,(char**)&shm_addr,sizeof(int))) == -1)
+	if((id_shared = get_shm(&key_shm,(char**)&shm_addr,sizeof(int)*nres)) == -1)
 	{
 		fprintf(stderr,"Cannot get shared memory area\n");
 		exit(EXIT_FAILURE);
@@ -58,28 +63,32 @@ int main(int argc, char **argv)
 	 * Wait for user input to produce
 	 */
 	char c;
+	int res;
 	srand(time(NULL));
 	printf("Press a key to produce (Ctrl-D to exit)");
 	while((c = getchar()) != EOF)
 	{
 		if(c != '\n') putchar('\n');
 
+		printf("Enter resource to use:");
+		scanf("%d",&res);
+		
 		/*
 		 * Wait for content to be consumed and buffer to be empty
 		 */
-		if(wait_sem(id_sem_notfull,0,0) == -1)
+		if(wait_sem(id_sem_notfull,res,0) == -1)
 		{
 			fprintf(stderr,"Error while waiting empty buffer\n");
 			exit(EXIT_FAILURE);
 		}
 
-		*shm_addr = rand();
-		printf("Produced value: %d\n",*shm_addr);
+		shm_addr[res] = rand();
+		printf("Produced value: %d\n",shm_addr[res]);
 
 		/*
 		 * Signal to consumer that there is something in the buffer
 		 */
-		if(signal_sem(id_sem_notempty,0,0) == -1)
+		if(signal_sem(id_sem_notempty,res,0) == -1)
 		{
 			fprintf(stderr,"Error while signaling full buffer\n");
 			exit(EXIT_FAILURE);
