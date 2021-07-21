@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "lib/lib.h"
 #include "CommonAssignmentIPC01/libsp.h"
+#include "lib/lib.h"
 
 #define NCOND 4
 #define S_WRITE 0
@@ -79,61 +79,67 @@ int deQueue(struct Queue* q)
     return key;
 }
 
-void write(Monitor *mon, struct Queue *q, int *val, int *nr, int *nw, int new_val)
+void writer(Monitor *mon, struct Queue *q, int *val, int *nr, int *nw, int new_val)
 {
     int n_readers, n_writers;
 
     enter_monitor(mon);
+    printf("### INIZIO PROCESSO SCRITTURA ###\n");
 
-    // Mi metto in coda per la scrittura
+    printf("Mi metto in coda per la scrittura\n");
     wait_cond(mon, S_NUM_WRITERS);
-    *nw++;
+    (*nw)++;
+    printf("n_writers: %d\n", *nw);
     signal_cond(mon, S_NUM_WRITERS);
     
-    // Azzero la coda di lettori in attesa
+    printf("Azzero la coda di lettori in attesa\n");
     wait_cond(mon, S_NUM_READERS);
-    // Salvo il blocco di lettori precedenti in attesa
+    printf("Salvo il blocco di lettori precedenti in attesa\n");
     enQueue(q, *nr);
     *nr = 0;
     signal_cond(mon, S_NUM_READERS);
-    // Il prossimo lettore ad entrare si vedrà come primo
+    printf("Il prossimo lettore ad entrare si vedrà come primo\n");
 
     // Tento la scrittura
     wait_cond(mon, S_WRITE);
     // Affinchè scriva non devono esserci neanche altri scrittori
+    printf("Effettuo la scrittura\n");
     *val = new_val;
     signal_cond(mon, S_WRITE);
     
 
-    // Decremento il numero di scrittori
+    printf("Decremento il numero di scrittori\n");
     wait_cond(mon, S_NUM_WRITERS);
-    *nw--;
+    (*nw)--;
     signal_cond(mon, S_NUM_WRITERS);
     
     leave_monitor(mon);
+    printf("### FINE PROCESSO SCRITTURA ###\n\n");
 }
 
-void read(Monitor *mon, struct Queue *q, int *val, int *nr, int *nw)
+void reader(Monitor *mon, struct Queue *q, int *val, int *nr, int *nw)
 {
     int n_readers, n_writers;
 
     enter_monitor(mon);
+    printf("### INIZIO PROCESSO LETTURA ###\n");
 
-    // Mi metto in coda per la lettura
+    printf("Mi metto in coda per la lettura\n");
     wait_cond(mon, S_NUM_READERS);
     n_readers = *nr++;
+    printf("n_readers: %d\n", n_readers);
     signal_cond(mon, S_NUM_READERS);
-
-    // Verifico quanti processi scrittori ci sono
+ 
+    printf("Verifico quanti processi scrittori ci sono\n");
     wait_cond(mon, S_NUM_WRITERS);
     n_writers = *nw;
+    printf("n_writers: %d\n", n_writers);
     signal_cond(mon, S_NUM_WRITERS);
-
-    // Se ci sono aspetto in coda
+    
     if (n_writers > 0)
     {
-        // Il primo lettore prende il lock della scrittura e crea un semaforo a cui
-        // si accodano gli altri lettori che vengono dopo di lui
+        printf("Se ci sono aspetto in coda\n");
+        // Il primo lettore prende il lock della scrittura
         if (n_readers == 1)
         {
             
@@ -160,7 +166,7 @@ void read(Monitor *mon, struct Queue *q, int *val, int *nr, int *nw)
     }
     
     // Se non ci sono stampo
-    printf("VALUE: %d", *val);
+    printf("VALUE: %d\n", *val);
 
     wait_cond(mon, S_NUM_READERS);
     *nr--;
@@ -172,6 +178,7 @@ void read(Monitor *mon, struct Queue *q, int *val, int *nr, int *nw)
     signal_cond(mon, S_NUM_READERS);
 
     leave_monitor(mon);
+    printf("### FINE PROCESSO LETTURA ###\n\n");
 }
 
 int main(int argc, char **argv)
@@ -182,17 +189,15 @@ int main(int argc, char **argv)
     /************************************
     *   DA CONDIVIDERE CON SHM
     */
-	int value = 0;
-    int n_writers = 0;
-    int n_readers = 0;
+	int *value = 0;
+    int *n_writers = 0;
+    int *n_readers = 0;
     struct Queue* q = createQueue();
     /*
     ************************************
     */
 
-#ifdef DEBUG
-    fpritnf(stderr,"Generating keys...\n");
-#endif
+    fprintf(stdout,"Generating keys...\n");
 
     // Generating key for shared memory
 	if ((key0 = ftok(".", 100)) == -1) { perror("ftok"); exit(1); }
@@ -200,9 +205,7 @@ int main(int argc, char **argv)
     if ((key2 = ftok(".", 102)) == -1) { perror("ftok"); exit(1); }
     if ((key3 = ftok(".", 103)) == -1) { perror("ftok"); exit(1); }
 
-#ifdef DEBUG
-    fpritnf(stderr,"Initializing shm...\n");
-#endif
+    fprintf(stdout,"Initializing shm...\n");
 
     // Attach shared memory to data
     get_shm(&key0, &value, sizeof(int));
@@ -210,32 +213,43 @@ int main(int argc, char **argv)
     get_shm(&key2, &n_readers, sizeof(int));
     get_shm(&key3, q, sizeof(struct Queue));
 
-#ifdef DEBUG
-    fpritnf(stderr,"Initializing monitor...\n");
-#endif
+    // Reset value in case of existing shm
+    *value = 0;
+    *n_writers = 0;
+    *n_readers = 0;
+
+    fprintf(stdout,"Initializing monitor...\n");
 
     // Initializing a monitor with 4 condition variable
     mon = init_monitor(NCOND);
+    signal_cond(mon, S_WRITE);
+    signal_cond(mon, S_NUM_WRITERS);
+    signal_cond(mon, S_NUM_READERS);
+    printf("S_WRITE: %d\n",semctl(mon -> id_cond, S_WRITE, GETVAL));
+    printf("S_NUM_WRITERS: %d\n",semctl(mon -> id_cond, S_NUM_WRITERS, GETVAL));
+    printf("S_NUM_READERS: %d\n",semctl(mon -> id_cond, S_NUM_READERS, GETVAL));
+
+    sleep(2);
 
     int num = 0;
 
     if (fork() == 0)
     {
-#ifdef DEBUG
-        fprintf(stderr,"SONS START\n");
-#endif
-        read(mon, q, &value, &n_readers, &n_writers);
-        sleep(4);
-        read(mon, q, &value, &n_readers, &n_writers);
+        sleep(20);
+        fprintf(stdout,"SONS START\n");
+        sleep(1);
+        reader(mon, q, value, n_readers, n_writers);
+        sleep(10);
+        reader(mon, q, value, n_readers, n_writers);
+        return 0;
     }
     else
     {
-#ifdef DEBUG
-        fprintf(stderr,"FATHER START\n");
-#endif
         num++;
-        sleep(1);
-        write(mon, q, &value, &n_readers, &n_writers, num);
+        sleep(5);
+        fprintf(stdout,"FATHER START\n");
+        writer(mon, q, value, n_readers, n_writers, num);
     }
     
+    return 0;
 }
