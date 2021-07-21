@@ -40,6 +40,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <time.h>
 #include <string.h>
 #include <sys/msg.h>
 #include <sys/types.h>
@@ -47,64 +48,69 @@
 #include "CommonAssignmentIPC01/libsp.h"
 
 #define ERRMSG_MAX_LEN 128
+#define MAX_RETRY 5
+#define MAX_WAITU 1000
 
 // ---------- SUPERFAST HASH ----------
 // http://www.azillionmonkeys.com/qed/hash.html
 #include <stdint.h>
 #undef get16bits
 #if (defined(__GNUC__) && defined(__i386__)) || defined(__WATCOMC__) \
-  || defined(_MSC_VER) || defined (__BORLANDC__) || defined (__TURBOC__)
+	|| defined(_MSC_VER) || defined (__BORLANDC__) || defined (__TURBOC__)
 #define get16bits(d) (*((const uint16_t *) (d)))
 #endif
 
 #if !defined (get16bits)
 #define get16bits(d) ((((uint32_t)(((const uint8_t *)(d))[1])) << 8)\
-                       +(uint32_t)(((const uint8_t *)(d))[0]) )
+		+(uint32_t)(((const uint8_t *)(d))[0]) )
 #endif
 
 uint32_t SuperFastHash (const char * data, int len) {
-uint32_t hash = len, tmp;
-int rem;
+	uint32_t hash = len, tmp;
+	int rem;
 
-    if (len <= 0 || data == NULL) return 0;
+	if (len <= 0 || data == NULL) return 0;
 
-    rem = len & 3;
-    len >>= 2;
+	rem = len & 3;
+	len >>= 2;
 
-    /* Main loop */
-    for (;len > 0; len--) {
-        hash  += get16bits (data);
-        tmp    = (get16bits (data+2) << 11) ^ hash;
-        hash   = (hash << 16) ^ tmp;
-        data  += 2*sizeof (uint16_t);
-        hash  += hash >> 11;
-    }
+	/* Main loop */
+	for (; len > 0; len--) {
+		hash  += get16bits (data);
+		tmp    = (get16bits (data+2) << 11) ^ hash;
+		hash   = (hash << 16) ^ tmp;
+		data  += 2*sizeof (uint16_t);
+		hash  += hash >> 11;
+	}
 
-    /* Handle end cases */
-    switch (rem) {
-        case 3: hash += get16bits (data);
-                hash ^= hash << 16;
-                hash ^= ((signed char)data[sizeof (uint16_t)]) << 18;
-                hash += hash >> 11;
-                break;
-        case 2: hash += get16bits (data);
-                hash ^= hash << 11;
-                hash += hash >> 17;
-                break;
-        case 1: hash += (signed char)*data;
-                hash ^= hash << 10;
-                hash += hash >> 1;
-    }
+	/* Handle end cases */
+	switch (rem) {
+	case 3:
+		hash += get16bits (data);
+		hash ^= hash << 16;
+		hash ^= ((signed char)data[sizeof (uint16_t)]) << 18;
+		hash += hash >> 11;
+		break;
+	case 2:
+		hash += get16bits (data);
+		hash ^= hash << 11;
+		hash += hash >> 17;
+		break;
+	case 1:
+		hash += (signed char)*data;
+		hash ^= hash << 10;
+		hash += hash >> 1;
+	}
 
-    /* Force "avalanching" of final 127 bits */
-    hash ^= hash << 3;
-    hash += hash >> 5;
-    hash ^= hash << 4;
-    hash += hash >> 17;
-    hash ^= hash << 25;
-    hash += hash >> 6;
+	/* Force "avalanching" of final 127 bits */
+	hash ^= hash << 3;
+	hash += hash >> 5;
+	hash ^= hash << 4;
+	hash += hash >> 17;
+	hash ^= hash << 25;
+	hash += hash >> 6;
 
-    return hash;
+	return hash;
 }
 // ------------------------------------
 
@@ -331,7 +337,7 @@ void remove_sem (int id_sem) {
  * @param msg_qid message queue ID
  * @param PTR_mess pointer to the structure of the message
  * @param send_flag operation flags (MSG_EXCEPT, MSG_NOERROR)
- * 
+ *
  */
 int send_async(int msg_qid, Message *PTR_mess, int send_flag)
 {
@@ -352,7 +358,7 @@ int send_async(int msg_qid, Message *PTR_mess, int send_flag)
  * @param msg_qid message queue ID
  * @param messaggio pointer to the structure of the message
  * @param flag operation flags (MSG_EXCEPT, MSG_NOERROR)
- * 
+ *
  */
 int send_sync(int msg_qid, Message *messaggio, int flag) {
 	int status;
@@ -376,10 +382,7 @@ int send_sync(int msg_qid, Message *messaggio, int flag) {
 	 * Computing message hash for ack
 	 */
 	int ack_value = SuperFastHash(messaggio->data,strlen(messaggio->data));
-	int hex_string_len = sizeof(int)*2+2;
-	char *ack_string = (char*)malloc((hex_string_len + 1)*sizeof(char));
-	sprintf(ack_string,"%#x",ack_value);
-	
+
 	/*
 	 * waiting for message received
 	 */
@@ -399,13 +402,61 @@ int send_sync(int msg_qid, Message *messaggio, int flag) {
 	/*
 	 * Check the ack
 	 */
-	if(strncmp(ack.data,ack_string,hex_string_len) != 0)
+	int msg_retry = 0, hash_rcv = 0;
+	sscanf(ack.data,"%d-%d",&hash_rcv,&msg_retry);
+
+	int my_retry = 0;
+	unsigned int seed = time(NULL);
+	while(hash_rcv != ack_value && my_retry < MAX_RETRY)
 	{
-		fprintf(stderr,"send_sync(msg_qid: %d, messaggio: %p, flag: %d) - Invalid ACK\n",msg_qid,messaggio,flag);
-		return -1;
+		/*
+		 * Maybe others processes are using my type so I have received one of
+		 * their ACK, I will try to receive my ack MAX_RETRY times
+		 */
+
+		/*
+		 * If the received ACK is not the right one I will reinsert
+		 * it into the queue
+		 */
+		if(msg_retry < MAX_RETRY)
+		{
+			sprintf(ack.data,"%d-%d",hash_rcv,msg_retry+1);
+			if((status = msgsnd(msg_qid,&ack,MAX_MSGQUEUE_LEN,flag)) == -1)
+			{
+				snprintf(error_string,ERRMSG_MAX_LEN,"send_sync(msg_qid: %d, messaggio: %p, flag: %d) - Cannot retry ack rcv",msg_qid,messaggio,flag);
+				perror(error_string);
+				return -1;
+			}
+
+			/*
+			 * Wait for a random time within the msec in order
+			 * to not pick always the same ack
+			 */
+			useconds_t usecs = rand_r(&seed) % MAX_WAITU;
+			usleep(usecs);
+		}
+
+		/*
+		 * Rcv the ack
+		 */
+		Message ack;
+		if((status = msgrcv(msg_qid,&ack,MAX_MSGQUEUE_LEN,messaggio->type,0)) == -1)
+		{
+			snprintf(error_string,ERRMSG_MAX_LEN,"send_sync(msg_qid: %d, messaggio: %p, flag: %d) - No ACK received",msg_qid,messaggio,flag);
+			perror(error_string);
+			return -1;
+		}
+
+		sscanf(ack.data,"%d-%d",&hash_rcv,&msg_retry);
+		my_retry++;
 	}
 
-	free(ack_string);
+	if(ack_value != hash_rcv)
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"send_sync(msg_qid: %d, messaggio: %p, flag: %d) - No ACK received",msg_qid,messaggio,flag);
+		perror(error_string);
+		return -1;
+	}
 
 	return 0;
 }
@@ -416,7 +467,7 @@ int send_sync(int msg_qid, Message *messaggio, int flag) {
  * @param msg_qid message queue ID
  * @param PTR_mess pointer to the structure of the message
  * @param receive_flag operation flags (MSG_EXCEPT, MSG_NOERROR)
- * 
+ *
  */
 int receive_async (int msg_qid, Message *PTR_mess, int receive_flag)
 {
@@ -437,7 +488,7 @@ int receive_async (int msg_qid, Message *PTR_mess, int receive_flag)
  * @param msg_qid message queue ID
  * @param messaggio pointer to the structure of the message
  * @param flag operation flags (MSG_EXCEPT, MSG_NOERROR)
- * 
+ *
  */
 int receive_sync(int msg_qid, Message *messaggio, int flag) {
 	int status;
@@ -448,7 +499,7 @@ int receive_sync(int msg_qid, Message *messaggio, int flag) {
 	 */
 	Message act_msg;
 	if((status = msgrcv(msg_qid,&act_msg,MAX_MSGQUEUE_LEN,\
-					messaggio->type,flag)) == -1)
+						messaggio->type,flag)) == -1)
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"receive_sync(msg_qid: %d, messaggio: %p, flag: %d) - Cannot receive message",msg_qid,messaggio,flag);
 		perror(error_string);
@@ -467,7 +518,7 @@ int receive_sync(int msg_qid, Message *messaggio, int flag) {
 	Message ack;
 	ack.type = messaggio->type;
 	int ack_value = SuperFastHash(messaggio->data,strlen(messaggio->data));
-	sprintf(ack.data,"%#x",ack_value);
+	sprintf(ack.data,"%d-%d",ack_value,0);
 
 	if((status = msgsnd(msg_qid,&ack,MAX_MSGQUEUE_LEN,0)) == -1)
 	{
@@ -487,7 +538,7 @@ int receive_sync(int msg_qid, Message *messaggio, int flag) {
  * @brief Create a new mailbox
  *
  * @param chiave_msg key of the message queue
- * @retval message queue id if all OK, -1 on error 
+ * @retval message queue id if all OK, -1 on error
  */
 int get_mailbox(key_t *chiave_msg)
 {
@@ -508,7 +559,7 @@ int get_mailbox(key_t *chiave_msg)
  * @brief Remove the selected mailbox
  *
  * @param msg_qid ID of the queue to remove
- * 
+ *
  */
 void remove_mailbox(int msg_qid)
 {
