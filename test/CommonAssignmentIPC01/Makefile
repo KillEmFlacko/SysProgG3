@@ -92,5 +92,4 @@ clean:
 main_monitor.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_msgq.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_sem.o: ../../include/CommonAssignmentIPC01/libsp.h
-main_shm.o: ../../include/lib/lib.h
 main_shm.o: ../../include/CommonAssignmentIPC01/libsp.h

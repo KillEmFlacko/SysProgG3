@@ -30,6 +30,8 @@ OBJS = $(patsubst %.c,%.o,$(SRCS))
 BUILD_DIR = $(BUILD)/$(MODULE_NAME)
 BIN_DIR = $(BUILD_DIR)/bin
 
+CFLAGS += -DKEY_FILE=\"$(BUILD_DIR)/tmp.key\"
+
 # Genero le path assolute degli object file e dell'eseguibile
 EXECS_ABSPATH = $(addprefix $(BIN_DIR)/,$(EXECS))
 
@@ -40,7 +42,7 @@ INCLUDE_REL = $(shell realpath --relative-to . $(INCLUDE))
 
 .PHONY: all clean
 
-all: $(EXECS_ABSPATH)
+all: $(BUILD_DIR)/tmp.key $(EXECS_ABSPATH) 
 
 depend:
 	makedepend -I $(INCLUDE_REL) $(SRCS) -Y /usr/include
@@ -66,6 +68,9 @@ $(BIN_DIR)/reader : $(BUILD_DIR)/readwrite.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
+$(BUILD_DIR)/tmp.key:
+	echo "Ciccio" > $@
+
 # Gestione delle dipendenze
 $(DEPS_ABSPATH):
 	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D))
@@ -80,6 +85,13 @@ clean:
 
 # DO NOT DELETE
 
+<<<<<<< HEAD
 main_cons.o: ../../include/lib/lib.h
 main_prod.o: ../../include/lib/lib.h
 readwrite.o: ../../include/lib/lib.h
+=======
+main_cons.o: ../../include/CommonAssignmentIPC01/libsp.h
+main_prod.o: ../../include/CommonAssignmentIPC01/libsp.h
+reader.o: ../../include/lib/lib.h
+writer.o: ../../include/lib/lib.h ../../include/CommonAssignmentIPC01/libsp.h
+>>>>>>> 1c54dbb67cd1b66d03d2456b26681c80b91641a3

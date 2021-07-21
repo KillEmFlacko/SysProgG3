@@ -1,10 +1,11 @@
-# TMP file for ftok
-TMP_FILENAME = tmp
-export TMP_ABSPATH = $(BUILD)/$(TMP_FILENAME)
-
 # Flags and compiler
+<<<<<<< HEAD
 DEBUG = -DDEBUG
 export CFLAGS = -Wall $(DEBUG) -DTMP_FILE=\"$(TMP_ABSPATH)\"
+=======
+DEBUG =
+export CFLAGS = -Wall $(DEBUG)
+>>>>>>> 1c54dbb67cd1b66d03d2456b26681c80b91641a3
 export LFLAGS = -Wall $(DEBUG)
 export CC = gcc
 
