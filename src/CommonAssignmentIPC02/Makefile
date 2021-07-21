@@ -85,13 +85,6 @@ clean:
 
 # DO NOT DELETE
 
-<<<<<<< HEAD
 main_cons.o: ../../include/lib/lib.h
 main_prod.o: ../../include/lib/lib.h
 readwrite.o: ../../include/lib/lib.h
-=======
-main_cons.o: ../../include/CommonAssignmentIPC01/libsp.h
-main_prod.o: ../../include/CommonAssignmentIPC01/libsp.h
-reader.o: ../../include/lib/lib.h
-writer.o: ../../include/lib/lib.h ../../include/CommonAssignmentIPC01/libsp.h
->>>>>>> 1c54dbb67cd1b66d03d2456b26681c80b91641a3
