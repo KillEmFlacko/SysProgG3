@@ -94,7 +94,11 @@ clean:
 
 # DO NOT DELETE
 
+main_cons_array.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_cons.o: ../../include/CommonAssignmentIPC01/libsp.h
+main_prod_array.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_prod.o: ../../include/CommonAssignmentIPC01/libsp.h
-reader.o: ../../include/lib/lib.h
-writer.o: ../../include/lib/lib.h ../../include/CommonAssignmentIPC01/libsp.h
+readwrite.o: ../../include/CommonAssignmentIPC01/libsp.h
+readwrite.o: ../../include/lib/lib.h
+readwrite_sem.o: ../../include/CommonAssignmentIPC01/libsp.h
+readwrite_sem.o: ../../include/lib/lib.h
