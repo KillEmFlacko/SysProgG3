@@ -9,7 +9,40 @@
 #define S_NUM_READERS 1
 #define S_QUEUE 2
 
-void writer(int sem, int *val, int new_val)
+#define BUFFER_SIZE 100
+
+typedef struct {
+    int batch[BUFFER_SIZE];
+    int front;
+    int back;
+    int num_elements;
+} Queue;
+
+Queue* initQueue(Queue* q)
+{
+    q -> front = q -> back = 0;
+    q -> num_elements = 0;
+    return q;
+}
+
+int push(Queue* q, int val)
+{
+    if((++(q -> num_elements)) == BUFFER_SIZE) return -1;
+    q -> batch [q -> front] = val;
+    q -> front = (q -> front + 1) % BUFFER_SIZE;
+    return 0;
+}
+
+int pop(Queue* q)
+{
+    if (q -> num_elements == 0) return -1;
+    (q -> num_elements)--;
+    int returnValue = q -> batch [q -> back];
+    q -> back = (q -> back + 1) % BUFFER_SIZE;
+    return returnValue;
+}
+
+void writer(int sem, Queue *q, int new_val)
 {
     printf("\n### INIZIO PROCESSO SCRITTURA ###\n");
 
@@ -26,7 +59,7 @@ void writer(int sem, int *val, int new_val)
     // ***
     sleep(12);
     // ***
-    *val = new_val;
+    push(q, new_val);
     printf("\n*\n*\n<< EXIT SECTION >>\n");
 
     signal_sem(sem, S_WRITE, 0);
@@ -34,7 +67,7 @@ void writer(int sem, int *val, int new_val)
     printf("### FINE PROCESSO SCRITTURA ###\n\n");
 }
 
-void reader(int sem, int *nr, int *val)
+void reader(int sem, int *nr, Queue *q)
 {
     printf("\n### INIZIO PROCESSO LETTURA ###\n");
 
@@ -57,7 +90,7 @@ void reader(int sem, int *nr, int *val)
 
     printf("<< CRITICAL SECTION >>\n");
 
-    printf("VALUE: %d\n", *val);
+    printf("VALUE: %d\n", pop(q));
 
     printf("<< EXIT SECTION >>\n");
 
@@ -83,8 +116,8 @@ int main(int argc, char **argv)
     /************************************
     *   SHARED MEMORY AREA
     */
-	int *value = 0;
-    int *n_readers = 0;
+	Queue* q;
+    int *n_readers;
     /*
     ************************************
     */
@@ -99,11 +132,11 @@ int main(int argc, char **argv)
     fprintf(stdout,"Initializing shm...\n");
 
     // Attach shared memory to data
-    get_shm(&key0, (char**)&value, sizeof(int));
+    get_shm(&key0, (char**)&q, sizeof(Queue));
     get_shm(&key1, (char**)&n_readers, sizeof(int));
 
     // Reset value in case of existing shm
-    *value = 0;
+    initQueue(q);
     *n_readers = 0;
 
     fprintf(stdout,"Initializing set of semaphores...\n");
@@ -127,7 +160,7 @@ int main(int argc, char **argv)
             while (1) 
             {
                 sleep(1);
-                reader(sem, n_readers, value);
+                reader(sem, n_readers, q);
             }
         }
         else
@@ -135,7 +168,7 @@ int main(int argc, char **argv)
             while (1) 
             {
                 sleep(1);
-                reader(sem, n_readers, value);
+                reader(sem, n_readers, q);
             }
         }
         
@@ -147,7 +180,7 @@ int main(int argc, char **argv)
         {
             num++;
             sleep(3);
-            writer(sem, value, num);
+            writer(sem, q, num);
         }
     }
     
