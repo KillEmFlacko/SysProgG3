@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "libsp.h"
+#include "CommonAssignmentIPC01/libsp.h"
+#include "lib/lib.h"
 
 #define NCOND 4
 #define S_WRITE 0
