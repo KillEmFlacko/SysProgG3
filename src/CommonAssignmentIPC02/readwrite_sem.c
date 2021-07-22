@@ -20,12 +20,10 @@ typedef struct {
     int num_elements;
 } BatchReaders;
 
-BatchReaders* initBatchReaders()
+void initBatchReaders(BatchReaders * b)
 {
-    BatchReaders* b = (BatchReaders*)malloc(sizeof(BatchReaders));
     b -> front = b -> back = 0;
     b -> num_elements = 0;
-    return b;
 }
 
 int push(BatchReaders* b, int val)
@@ -171,10 +169,10 @@ int main(int argc, char **argv)
     /************************************
     *   DA CONDIVIDERE CON SHM
     */
-	int *value = 0;
-    int *n_writers = 0;
-    int *n_readers = 0;
-    BatchReaders* b = initBatchReaders();
+	int *value;
+    int *n_writers;
+    int *n_readers;
+    BatchReaders* b;
     /*
     ************************************
     */
@@ -190,16 +188,17 @@ int main(int argc, char **argv)
     fprintf(stdout,"Initializing shm...\n");
 
     // Attach shared memory to data
-    get_shm(&key0, &value, sizeof(int));
-    get_shm(&key1, &n_writers, sizeof(int));
-    get_shm(&key2, &n_readers, sizeof(int));
+    get_shm(&key0, (char**)&value, sizeof(int));
+    get_shm(&key1, (char**)&n_writers, sizeof(int));
+    get_shm(&key2, (char**)&n_readers, sizeof(int));
     printf("Adesso provo a creare la coda in shm...\n");
-    get_shm(&key3, b, sizeof(BatchReaders));
+    get_shm(&key3, (char**)&b, sizeof(BatchReaders));
 
     // Reset value in case of existing shm
     *value = 0;
     *n_writers = 0;
     *n_readers = 0;
+	initBatchReaders(b);
 
     fprintf(stdout,"Initializing monitor...\n");
 
