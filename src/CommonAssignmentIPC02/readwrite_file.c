@@ -3,7 +3,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
-#include "libsp.h"
+#include "CommonAssignmentIPC01/libsp.h"
+#include "lib/lib.h"
 
 #define NCOND 3
 #define S_WRITE 0
