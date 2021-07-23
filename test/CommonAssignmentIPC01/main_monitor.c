@@ -56,7 +56,11 @@ int main(int argc, char **argv)
 	/*
 	 * Test monitor creation
 	 */
-	Monitor *mon = init_monitor(NCOND);
+	key_t key = IPC_PRIVATE;
+	Monitor *mon = init_monitor(&key,NCOND);
+#ifdef DEBUG
+	fprintf(stderr,"monitor created\n");
+#endif
 	assert(mon != NULL);
 
 	/*
@@ -117,9 +121,15 @@ int main(int argc, char **argv)
 		 */
 
 		leave_monitor(mon);
+#ifdef DEBUG
+		fprintf(stderr,"Parent leaved monitor\n");
+#endif
 
 		int retval;
 		wait(&retval);
+#ifdef DEBUG
+		fprintf(stderr,"Parent waited for child\n");
+#endif
 		
 		/*
 		 * Test if monitor is removed correctly
@@ -158,6 +168,9 @@ int main(int argc, char **argv)
 		enter_monitor(mon);
 		assert(semctl(mon->id_mutex,I_MUTEX,GETVAL) == 0);
 
+#ifdef DEBUG
+		fprintf(stderr,"Proc %d: Child in monitor\n",getpid());
+#endif
 		signal_cond(mon,0);
 		assert(semctl(mon->id_mutex,I_MUTEX,GETVAL) == 0);
 		assert(semctl(mon->id_mutex,I_PREEMPT,GETVAL) == 0);
@@ -165,6 +178,9 @@ int main(int argc, char **argv)
 
 		leave_monitor(mon);
 
+#ifdef DEBUG
+		fprintf(stderr,"Proc %d: Child is ended\n",getpid());
+#endif
 		exit(EXIT_SUCCESS);
 	}
 

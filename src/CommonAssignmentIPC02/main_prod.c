@@ -3,9 +3,6 @@
 #include <time.h>
 #include "CommonAssignmentIPC01/libsp.h"
 
-#define NOTFULL_SEM 1
-#define NOTEMPTY_SEM 0
-
 int id_sem_notfull = -1, id_sem_notempty = -1, id_shared = -1;
 
 void exit_procedure(void)
