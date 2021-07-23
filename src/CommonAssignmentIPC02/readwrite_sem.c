@@ -203,7 +203,8 @@ int main(int argc, char **argv)
     fprintf(stdout,"Initializing monitor...\n");
 
     // Initializing a monitor with 4 condition variable
-    mon = init_monitor(NCOND);
+	key_t key_mon = IPC_PRIVATE;
+    mon = init_monitor(&key_mon,NCOND);
     signal_sem(mon -> id_cond, S_WRITE, 0);
     signal_sem(mon -> id_cond, S_NUM_READERS, 0);
     signal_sem(mon -> id_cond, S_NUM_WRITERS, 0);

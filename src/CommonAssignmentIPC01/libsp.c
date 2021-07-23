@@ -514,7 +514,7 @@ int receive_sync(int msg_qid, Message *messaggio, int flag) {
 	sscanf(act_msg.data,"%d-%s",&to_cont,messaggio->data);
 
 	/*
-	 * Compute and send ack as a string
+	 * Compute and send ack
 	 */
 	Message ack;
 	ack.type = messaggio->type;
@@ -581,9 +581,57 @@ void remove_mailbox(int msg_qid)
  * @param ncond number of conditiions to support and to initialize
  * @retval reference to the monitor, NULL on error
  */
-Monitor *init_monitor(int ncond)
+Monitor *init_monitor(key_t *key, int ncond)
 {
 	char error_string[ERRMSG_MAX_LEN];
+
+	int shmid;
+	int is_new = 1;
+	Monitor *mon;
+
+	// Check if the segment exists
+	if ((shmid = shmget(*key, sizeof(Monitor),IPC_CREAT | IPC_EXCL | SEMPERM)) == -1)
+	{
+		if(errno == EEXIST)
+		{
+			// It does exist... retrieve shared memory 
+			if ((shmid = shmget(*key, sizeof(Monitor), SEMPERM)) == -1)
+			{
+				snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(key: %p, ncond: %d) - Cannot create shared memory",key,ncond);
+				perror(error_string);
+				return NULL;
+			}
+			is_new = 0;
+		}
+		else
+		{
+			/*
+			 * Something unexpected happened
+			 */
+			snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(key: %p, ncond: %d) - Cannot create shared memory",key,ncond);
+			perror(error_string);
+			return NULL;
+		}
+	}
+
+	/*
+	 * Attach shared memory area to process address space
+	 */
+
+	if ((mon = (Monitor*)shmat(shmid, NULL, 0)) == (void *)(-1))
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(key: %p, ncond: %d) - Cannot attach shared memory",key,ncond);
+		perror(error_string);
+		return NULL;
+	}
+
+	/*
+	 * If it is not a newly created area is not
+	 * my responsability to initialize it
+	 */
+	if(!is_new) return mon; 
+
+	mon->id_shm = shmid;
 
 	/*
 	 * 	Creation of mutex semaphore set:
@@ -601,7 +649,6 @@ Monitor *init_monitor(int ncond)
 	int mutex_sem;
 
 #ifdef DEBUG
-	fprintf(stderr,"Path to file: %s\n",TMP_FILE);
 	fprintf(stderr,"Mutex key: %d\n",key_mutex);
 #endif
 
@@ -648,7 +695,6 @@ Monitor *init_monitor(int ncond)
 	/*
 	 *	Is our responsibility to allocate and deallocate the structure
 	 */
-	Monitor* mon = (Monitor*)malloc(sizeof(Monitor));
 
 	mon -> id_mutex = mutex_sem;
 	mon -> numcond = ncond;
@@ -811,7 +857,7 @@ void remove_monitor(Monitor *mon)
 {
 	remove_sem(mon->id_cond);
 	remove_sem(mon->id_mutex);
-	free((void*)mon);
+	remove_shm(mon->id_shm);
 }
 
 /**

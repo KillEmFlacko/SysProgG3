@@ -93,12 +93,13 @@ void remove_mailbox(int msg_qid);
  */
 typedef struct
 {
-   int id_mutex; /**< ID of the mutex and preempt semaphore */
-   int numcond; /**< Number of avaliable conditions  */
-   int id_cond; /**< ID of the condition semaphores */
+	int id_shm;
+   	int id_mutex; /**< ID of the mutex and preempt semaphore */
+   	int numcond; /**< Number of avaliable conditions  */
+   	int id_cond; /**< ID of the condition semaphores */
 } Monitor;
 
-Monitor *init_monitor(int ncond); /*init  monitor :
+Monitor *init_monitor(key_t *key,int ncond); /*init  monitor :
 inputs : numcond  to init;
 outputs: Monitor *: */
 
