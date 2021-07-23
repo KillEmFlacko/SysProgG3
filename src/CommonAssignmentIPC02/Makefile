@@ -72,7 +72,7 @@ $(BIN_DIR)/consumer_array : $(BUILD_DIR)/main_cons_array.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
-$(BIN_DIR)/readwrite : $(BUILD_DIR)/readwrite.o $(DEPS_ABSPATH)
+$(BIN_DIR)/readwrite : $(BUILD_DIR)/readwrite_sem.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 

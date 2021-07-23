@@ -64,7 +64,6 @@ int main(int argc, char **argv)
 	 */
 	char c;
 	int res;
-	srand(time(NULL));
 	printf("Press a key to consume (Ctrl-D to exit)");
 	while((c = getchar()) != EOF)
 	{
@@ -74,7 +73,7 @@ int main(int argc, char **argv)
 		scanf("%d",&res);
 
 		/*
-		 * Wait for content to be avliable and buffer to be full
+		 * Wait for content to be avaliable and buffer to be full
 		 */
 		if(wait_sem(id_sem_notempty,res,0) == -1)
 		{
@@ -85,7 +84,7 @@ int main(int argc, char **argv)
 		printf("Consumed value: %d\n",shm_addr[res]);
 
 		/*
-		 * Signal to producer that the buffer is empty
+		 * Signal to producer that buffer is empty
 		 */
 		if(signal_sem(id_sem_notfull,res,0) == -1)
 		{

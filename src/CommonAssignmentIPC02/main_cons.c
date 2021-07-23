@@ -52,11 +52,9 @@ int main(int argc, char **argv)
 	}
 
 	/*
-	 * Wait for user input to produce
+	 * Wait for user input to consume
 	 */
 	char c;
-	srand(time(NULL));
-
 	printf("Press a key to consume (Ctrl-D to exit)");
 	while((c = getchar()) != EOF)
 	{
