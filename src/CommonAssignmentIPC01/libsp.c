@@ -34,16 +34,12 @@
   */
 
 #include <asm-generic/errno-base.h>
-#include <asm-generic/errno.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <time.h>
 #include <string.h>
-#include <sys/msg.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include "CommonAssignmentIPC01/libsp.h"
 
@@ -120,24 +116,24 @@ uint32_t SuperFastHash (const char * data, int len) {
  * @param chiave key of the shared memory
  * @param ptr_shared if all OK points to the start of shared memory area
  * @param dim dimension in byte of the shared memory area (if created)
+ * @param created 1 if newly created, 0 if not created
  * @retval shared memory ID if OK, -1 on error
  */
-int get_shm (key_t *chiave, char **ptr_shared, int dim)
+int get_shm (key_t *chiave, char **ptr_shared, int dim, int *created)
 {
 	int shmid;
 	void *area;
 	char error_string[ERRMSG_MAX_LEN];
+	if(created != NULL) *created = 1;
 
-	// Check if the segment exists
-	if ((shmid = shmget(*chiave, dim, SEMPERM)) == -1)
+	// Try to create a shm area
+	if ((shmid = shmget(*chiave, dim, IPC_CREAT | IPC_EXCL | SEMPERM)) == -1)
 	{
-		if(errno == ENOENT)
+		if(errno == EEXIST)
 		{
-#ifdef DEBUG
-			write(STDERR_FILENO,"Creation of a shared memory segment\n",27);
-#endif
-			// It does not exist... Creation of the shared memory
-			if ((shmid = shmget(*chiave, dim, IPC_CREAT | IPC_EXCL | SEMPERM)) == -1)
+			if(created != NULL) *created = 0;
+			// If exists then retrieve that shm area
+			if ((shmid = shmget(*chiave, dim, SEMPERM)) == -1)
 			{
 				snprintf(error_string,ERRMSG_MAX_LEN,"get_shm(chiave: %p, ptr_shared: %p, dim: %d) - Cannot create shared memory",chiave,ptr_shared,dim);
 				perror(error_string);
@@ -154,9 +150,7 @@ int get_shm (key_t *chiave, char **ptr_shared, int dim)
 			return -1;
 		}
 	}
-#ifdef DEBUG
-	write(STDERR_FILENO,"Function body\n",15);
-#endif
+
 	/*
 	 * Attach shared memory area to process address space
 	 */
@@ -495,6 +489,7 @@ int receive_sync(int msg_qid, Message *messaggio, int flag) {
 	int status;
 	char error_string[ERRMSG_MAX_LEN];
 
+
 	/*
 	 * Rcv the actual message
 	 */
@@ -586,41 +581,15 @@ Monitor *init_monitor(key_t *key, int ncond)
 	char error_string[ERRMSG_MAX_LEN];
 
 	int shmid;
-	int is_new = 1;
+	int created;
 	Monitor *mon;
 
-	// Check if the segment exists
-	if ((shmid = shmget(*key, sizeof(Monitor),IPC_CREAT | IPC_EXCL | SEMPERM)) == -1)
-	{
-		if(errno == EEXIST)
-		{
-			// It does exist... retrieve shared memory 
-			if ((shmid = shmget(*key, sizeof(Monitor), SEMPERM)) == -1)
-			{
-				snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(key: %p, ncond: %d) - Cannot create shared memory",key,ncond);
-				perror(error_string);
-				return NULL;
-			}
-			is_new = 0;
-		}
-		else
-		{
-			/*
-			 * Something unexpected happened
-			 */
-			snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(key: %p, ncond: %d) - Cannot create shared memory",key,ncond);
-			perror(error_string);
-			return NULL;
-		}
-	}
-
 	/*
-	 * Attach shared memory area to process address space
+	 * Get shared memory area in order to share the monitor
 	 */
-
-	if ((mon = (Monitor*)shmat(shmid, NULL, 0)) == (void *)(-1))
+	if((shmid = get_shm(key,(char**)&mon,sizeof(Monitor),&created)) == -1)
 	{
-		snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(key: %p, ncond: %d) - Cannot attach shared memory",key,ncond);
+		snprintf(error_string,ERRMSG_MAX_LEN,"init_monitor(ncond: %d) - Cannot get shared memory area",ncond);
 		perror(error_string);
 		return NULL;
 	}
@@ -629,8 +598,12 @@ Monitor *init_monitor(key_t *key, int ncond)
 	 * If it is not a newly created area is not
 	 * my responsability to initialize it
 	 */
-	if(!is_new) return mon; 
+	if(!created) return mon; 
 
+	/*
+	 * Save the newly created shared memory ID in order
+	 * to remove it later.
+	 */
 	mon->id_shm = shmid;
 
 	/*
@@ -797,18 +770,12 @@ int wait_cond(Monitor *mon,int cond_num)
 
 	if(wait_sem(mon -> id_cond, cond_num, 0) == -1)
 	{
-
-		if (preempt_count > 0)
-		{
-			wait_sem(mon -> id_mutex, I_PREEMPT, 0);
-		}
-		else
-		{
-			wait_sem(mon -> id_mutex, I_MUTEX, 0);
-		}
+		snprintf(error_string,ERRMSG_MAX_LEN,"wait_cond(mon: %p, cond_num: %d) - Cannot wait on resource", mon, cond_num);
+		perror(error_string);
+		return -1;
 	}
 
-	return -1;
+	return 0;
 }
 
 /**

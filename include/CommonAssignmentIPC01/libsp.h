@@ -46,19 +46,17 @@
 #define I_MUTEX 0   //!< Index of the mutex semaphore in the set
 #define I_PREEMPT 1 //!< Index of the preempt semaphore in the set (also called urgent)
 
-#define KEY(k) (ftok(TMP_FILE,k))
-
 /**
  * @brief Struct of a message in the message queue
  */
-typedef struct
+typedef struct Message_Struct
 {
    long type; /**< Represents the type of the message */
    char data[MAX_MSGQUEUE_LEN]; /**< Contains the text of the message */
 } Message;
 
 /* Request a shared memory */
-int get_shm(key_t *chiave, char **ptr_shared, int dim);
+int get_shm(key_t *chiave, char **ptr_shared, int dim, int *created);
 /* Request a semaphore */
 int get_sem(key_t *chiave_sem, int numsem, int initsem);
 /* wait on the semaphore */
@@ -91,7 +89,7 @@ void remove_mailbox(int msg_qid);
 /**
  * @brief Monitor structure
  */
-typedef struct
+typedef struct Monitor_Struct
 {
 	int id_shm;
    	int id_mutex; /**< ID of the mutex and preempt semaphore */

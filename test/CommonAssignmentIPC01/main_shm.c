@@ -60,7 +60,7 @@ int main(int argc, char **argv){
 
 		char* shm1;
 		
-		assert((shmid = get_shm(&key, &shm1, 128)) != -1);
+		assert((shmid = get_shm(&key, &shm1, 128, NULL)) != -1);
 #ifdef DEBUG
 		fprintf(stderr, "shmid: %d\n", shmid);
 #endif
@@ -74,7 +74,7 @@ int main(int argc, char **argv){
 
 		char* shm2;
 		
-		assert((shmid = get_shm(&key, &shm2, 128)) != -1);
+		assert((shmid = get_shm(&key, &shm2, 128, NULL)) != -1);
 #ifdef DEBUG
 		fprintf(stderr, "shmid: %d\n", shmid);
 #endif
