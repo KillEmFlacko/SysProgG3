@@ -33,3 +33,4 @@ clean:
 # DO NOT DELETE
 
 lib.o: /home/armando/git/SysProgG3/include/lib/lib.h
+queue.o: /home/armando/git/SysProgG3/include/lib/queue.h

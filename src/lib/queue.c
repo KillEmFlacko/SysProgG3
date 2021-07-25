@@ -56,6 +56,6 @@ int Queue_front(Queue_TypeDef *queue, int *value)
 int Queue_back(Queue_TypeDef *queue, int *value)
 {
 	if(Queue_isEmpty(queue)) return -1;
-	*value = queue->array[queue->back];
+	*value = queue->array[queue->back-1];
 	return 0;
 }
