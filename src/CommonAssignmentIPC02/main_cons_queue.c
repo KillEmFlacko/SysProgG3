@@ -35,25 +35,31 @@ int main(int argc, char **argv)
 	/*
 	 * Create and attach shared memory area
 	 */
+	int created;
 	Queue_TypeDef* shm_addr;
-	if((id_shared = get_shm(&key_shm,(char**)&shm_addr,sizeof(Queue_TypeDef))) == -1)
+	if((id_shared = get_shm(&key_shm,(char**)&shm_addr,sizeof(Queue_TypeDef), &created)) == -1)
 	{
 		fprintf(stderr,"Cannot get shared memory area\n");
 		exit(EXIT_FAILURE);
 	}
 
 	/*
-	 * Init queue
+	 * Init queue if this process has created the area
 	 */
-	Queue_init(shm_addr);
+	if(created == 1)
+	{
+		enter_monitor(monitor);
+		Queue_init(shm_addr);
+		leave_monitor(monitor);
+	}
 
 	/*
 	 * Wait for user input to consume
 	 */
 	char c;
 	int read_val;
-	srand(time(NULL));
-	printf("Press a key to produce (Ctrl-D to exit)");
+
+	printf("Press a key to consume (Ctrl-D to exit)");
 	while((c = getchar()) != EOF)
 	{
 		if(c != '\n') putchar('\n');
@@ -61,40 +67,34 @@ int main(int argc, char **argv)
 		enter_monitor(monitor);
 
 		/*
-		 * Try to add an element in the queue
+		 * Try to remove an element from the queue
 		 */
-		if(Queue_enqueue(shm_addr,rand()) == -1)
+		if(Queue_dequeue(shm_addr,&read_val) == -1)
 		{
-			if(wait_cond(monitor,NOTFULL) == -1)
+			if(wait_cond(monitor,NOTEMPTY) == -1)
 			{
-				fprintf(stderr,"Cannot wait for free space in queue\n");
+				fprintf(stderr,"Cannot wait for elements in the queue\n");
 				exit(EXIT_FAILURE);
 			}
 		}
 
 		/*
-		 * Print the produced element
+		 * Print the consumed element
 		 */
-		if(Queue_back(shm_addr,&read_val) == -1)
-		{
-			fprintf(stderr,"Cannot read from queue\n");
-			exit(EXIT_FAILURE);
-		}
-
-		printf("Produced value: %d\n",read_val);
+		printf("Consumed value: %d\n",read_val);
 
 		/*
-		 * Signal to consumer that there is something in the buffer
+		 * Signal to producer that queue is not full
 		 */
-		if(signal_cond(monitor,NOTEMPTY) == -1)
+		if(signal_cond(monitor,NOTFULL) == -1)
 		{
-			fprintf(stderr,"Error while signaling new element in buffer\n");
+			fprintf(stderr,"Error while signaling free space into queue\n");
 			exit(EXIT_FAILURE);
 		}
 
 		leave_monitor(monitor);
 
-		printf("Press a key to produce (Ctrl-D to exit)");
+		printf("Press a key to consume (Ctrl-D to exit)");
 	}
 
 	exit(EXIT_SUCCESS);

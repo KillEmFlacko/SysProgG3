@@ -33,23 +33,25 @@ int main(int argc, char **argv)
 	key_t key_shm = ftok(KEY_FILE,2);
 
 	/*
-	 * TODO: Come controlli che non venga inizializzato anche da
-	 * altri processi?????????
-	 */
-	/*
 	 * Create and attach shared memory area
 	 */
+	int created;
 	Queue_TypeDef* shm_addr;
-	if((id_shared = get_shm(&key_shm,(char**)&shm_addr,sizeof(Queue_TypeDef))) == -1)
+	if((id_shared = get_shm(&key_shm,(char**)&shm_addr,sizeof(Queue_TypeDef), &created)) == -1)
 	{
 		fprintf(stderr,"Cannot get shared memory area\n");
 		exit(EXIT_FAILURE);
 	}
 
 	/*
-	 * Init queue
+	 * Init queue if this process has created the area
 	 */
-	Queue_init(shm_addr);
+	if(created == 1)
+	{
+		enter_monitor(monitor);
+		Queue_init(shm_addr);
+		leave_monitor(monitor);
+	}
 
 	/*
 	 * Wait for user input to produce

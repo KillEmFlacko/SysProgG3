@@ -1,5 +1,5 @@
 # Lista degli eseguibili da generare (vedi nelle recipe per la generazione)
-EXECS = producer consumer producer_array consumer_array readwrite
+EXECS = producer consumer producer_array consumer_array producer_queue consumer_queue #readwrite
 
 # Recupero il nome del modulo in analisi
 MODULE_NAME = $(notdir $(shell pwd))
@@ -72,9 +72,17 @@ $(BIN_DIR)/consumer_array : $(BUILD_DIR)/main_cons_array.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
-$(BIN_DIR)/readwrite : $(BUILD_DIR)/readwrite_sem.o $(DEPS_ABSPATH)
+$(BIN_DIR)/producer_queue : $(BUILD_DIR)/main_prod_queue.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
+
+$(BIN_DIR)/consumer_queue : $(BUILD_DIR)/main_cons_queue.o $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $^
+
+#$(BIN_DIR)/readwrite : $(BUILD_DIR)/readwrite_sem.o $(DEPS_ABSPATH)
+#	-mkdir -p $(dir $@)
+#	$(CC) $(LFLAGS) -o $@ $^
 
 $(BUILD_DIR)/tmp.key:
 	-mkdir -p $(dir $@)
@@ -96,9 +104,15 @@ clean:
 
 main_cons_array.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_cons.o: ../../include/CommonAssignmentIPC01/libsp.h
+main_cons_queue.o: ../../include/CommonAssignmentIPC01/libsp.h
+main_cons_queue.o: ../../include/lib/queue.h
 main_prod_array.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_prod.o: ../../include/CommonAssignmentIPC01/libsp.h
-readwrite.o: ../../include/CommonAssignmentIPC01/libsp.h
-readwrite.o: ../../include/lib/lib.h
-readwrite_sem.o: ../../include/CommonAssignmentIPC01/libsp.h
-readwrite_sem.o: ../../include/lib/lib.h
+main_prod_queue.o: ../../include/CommonAssignmentIPC01/libsp.h
+main_prod_queue.o: ../../include/lib/queue.h
+readwrite_file.o: ../../include/CommonAssignmentIPC01/libsp.h
+readwrite_file.o: ../../include/lib/lib.h
+readwrite_queue.o: ../../include/CommonAssignmentIPC01/libsp.h
+readwrite_queue.o: ../../include/lib/lib.h
+readwrite_var.o: ../../include/CommonAssignmentIPC01/libsp.h
+readwrite_var.o: ../../include/lib/lib.h
