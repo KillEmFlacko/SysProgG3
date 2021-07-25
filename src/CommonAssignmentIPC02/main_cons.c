@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 	 * Create and attach shared memory area
 	 */
 	int* shm_addr;
-	if((id_shared = get_shm(&key_shm,(char**)&shm_addr,sizeof(int))) == -1)
+	if((id_shared = get_shm(&key_shm,(char**)&shm_addr,sizeof(int),NULL)) == -1)
 	{
 		fprintf(stderr,"Cannot get shared memory area\n");
 		exit(EXIT_FAILURE);
