@@ -1,5 +1,5 @@
 # Lista degli eseguibili da generare (vedi nelle recipe per la generazione)
-EXECS = program
+EXECS = program_lamport
 
 # Recupero il nome del modulo in analisi
 MODULE_NAME = $(notdir $(shell pwd))
@@ -54,7 +54,7 @@ depend:
 #	-mkdir -p $(dir $@)
 #	$(CC) $(LFLAGS) -o $@ $^
 
-$(BIN_DIR)/program : $(BUILD_DIR)/main.o $(BUILD_DIR)/lamport.o $(DEPS_ABSPATH)
+$(BIN_DIR)/program_lamport : $(BUILD_DIR)/main_lamport.o $(BUILD_DIR)/lamport.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
