@@ -8,7 +8,7 @@ MODULE_NAME = $(notdir $(shell pwd))
 CFLAGS += -D_FILE_OFFSET_BITS=64
 
 # Additional linking flags
-LFLAGS += -D_FILE_OFFSET_BITS=64 -lfuse -pthread
+LFLAGS += -D_FILE_OFFSET_BITS=64
 
 # ------------ CALCOLO DELLE DIPENDENZE ------------
 
@@ -62,7 +62,7 @@ depend:
 
 $(BIN_DIR)/dnfs : $(BUILD_DIR)/dnfs.o $(BUILD_DIR)/log.o #$(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
-	$(CC) $(LFLAGS) -o $@ $^
+	$(CC) $(LFLAGS) -o $@ $^ -lfuse -pthread
 
 # Gestione delle dipendenze
 #$(DEPS_ABSPATH):
