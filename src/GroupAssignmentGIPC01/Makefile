@@ -54,7 +54,7 @@ depend:
 #	-mkdir -p $(dir $@)
 #	$(CC) $(LFLAGS) -o $@ $^
 
-$(BIN_DIR)/program : $(BUILD_DIR)/main.o $(DEPS_ABSPATH)
+$(BIN_DIR)/program : $(BUILD_DIR)/main.o $(BUILD_DIR)/lamport.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
@@ -72,4 +72,7 @@ clean:
 
 # DO NOT DELETE
 
-main.o: ../../include/lib/lib.h
+lamport.o: ../../include/GroupAssignmentGIPC01/lamport.h
+lamport.o: ../../include/lib/queue.h
+main.o: ../../include/lib/queue.h
+main.o: ../../include/GroupAssignmentGIPC01/lamport.h

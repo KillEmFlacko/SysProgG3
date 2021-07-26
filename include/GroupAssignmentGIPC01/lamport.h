@@ -28,10 +28,32 @@
  * along with SysProgG3.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-#include "GroupAssignmentGIPC01/lamport.h"
+/**
+  @file lamport.h
+  @brief Library header for GroupAssignmentGIPC01
+  */
 
-int main(int argc, char **argv)
+#ifndef LAMPORT_H
+#define LAMPORT_H
+
+#include <sys/types.h>
+#include "lib/queue.h"
+
+struct Lamport_Struct
 {
-	exit(EXIT_SUCCESS);
-}
+	int msg_qid;
+	Queue_TypeDef* proc_queue;
+};
+
+typedef struct Lamport_Struct Lamport_TypeDef;
+
+Lamport_TypeDef* Lamport_init(key_t *key);
+
+int Lamport_lock(pid_t pid);
+
+int Lamport_unlock(pid_t pid);
+
+int Lamport_remove(Lamport_TypeDef *lamport);
+
+#endif
+

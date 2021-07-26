@@ -28,10 +28,30 @@
  * along with SysProgG3.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+  @file lamport.c
+  @brief Library for GroupAssignmentGIPC01
+  */
+
 #include <stdlib.h>
 #include "GroupAssignmentGIPC01/lamport.h"
 
-int main(int argc, char **argv)
+Lamport_TypeDef* Lamport_init(key_t *key)
 {
-	exit(EXIT_SUCCESS);
+	return NULL;
+}
+
+int Lamport_lock(pid_t pid)
+{
+	return -1;
+}
+
+int Lamport_unlock(pid_t pid)
+{
+	return -1;
+}
+
+int Lamport_remove(Lamport_TypeDef *lamport)
+{
+	return -1;
 }
