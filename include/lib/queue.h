@@ -1,5 +1,5 @@
-#ifndef LIB_H
-#define LIB_H
+#ifndef QUEUE_H
+#define QUEUE_H
 
 #define MAXLEN_QUEUE 256
 
