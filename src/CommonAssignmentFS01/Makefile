@@ -1,8 +1,14 @@
 # Lista degli eseguibili da generare (vedi nelle recipe per la generazione)
-EXECS = program
+EXECS = dnfs
 
 # Recupero il nome del modulo in analisi
 MODULE_NAME = $(notdir $(shell pwd))
+
+# Additional compile flags
+CFLAGS += -D_FILE_OFFSET_BITS=64
+
+# Additional linking flags
+LFLAGS += -D_FILE_OFFSET_BITS=64 -lfuse -pthread
 
 # ------------ CALCOLO DELLE DIPENDENZE ------------
 
@@ -10,7 +16,7 @@ MODULE_NAME = $(notdir $(shell pwd))
 SRCS=$(shell find *.c 2>/dev/null)
 MY_INCLUDES = \
 	$(foreach src, $(SRCS), \
-		$(filter $(INCLUDE)%,$(shell $(CC) -I $(INCLUDE) -M $(src)))\
+		$(filter $(INCLUDE)%,$(shell $(CC) $(CFLAGS) -I $(INCLUDE) -M $(src)))\
 	 )
 
 # Trasformo gli include in moduli di dipendenza 
@@ -54,13 +60,13 @@ depend:
 #	-mkdir -p $(dir $@)
 #	$(CC) $(LFLAGS) -o $@ $^
 
-$(BIN_DIR)/program : $(BUILD_DIR)/main.o $(DEPS_ABSPATH)
+$(BIN_DIR)/dnfs : $(BUILD_DIR)/dnfs.o $(BUILD_DIR)/log.o #$(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
 # Gestione delle dipendenze
-$(DEPS_ABSPATH):
-	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D))
+#$(DEPS_ABSPATH):
+#	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D))
 
 # Recipe per gli object files
 $(BUILD)/$(MODULE_NAME)/%.o: %.c $(MY_INCLUDES)
@@ -72,4 +78,7 @@ clean:
 
 # DO NOT DELETE
 
-main.o: ../../include/lib/lib.h
+dnfs.o: ../../include/CommonAssignmentFS01/p.h
+dnfs.o: ../../include/CommonAssignmentFS01/log.h
+log.o: ../../include/CommonAssignmentFS01/p.h
+log.o: ../../include/CommonAssignmentFS01/log.h
