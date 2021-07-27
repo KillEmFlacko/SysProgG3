@@ -30,7 +30,7 @@
 
 /**
   @file lamport.h
-  @brief Library header for GroupAssignmentGIPC01
+  @brief Library header for Lamport's bakery algorithm required in GroupAssignmentGIPC01
   */
 
 #ifndef LAMPORT_H
@@ -39,19 +39,25 @@
 #include <sys/types.h>
 #include "lib/queue.h"
 
+/**
+ * @brief Contains all data necessary for critical section syncronization between processes using Lamport's bakery algorithm
+ */
 struct Lamport_Struct
 {
-	int msg_qid;
-	Queue_TypeDef* proc_queue;
+	int shm_id;		///< shared memory id for sharing entering and number arrays
+	int id;			///< identifier of the process that has created the structure
+	int num_procs;	///< number of processes involved
+	int *entering;	///< entering array in Lamport algorithm, needed for not ignoring requesting processes
+	int *number;	///< number array in Lamport algorithm, contains the actual number assigned to each process
 };
 
 typedef struct Lamport_Struct Lamport_TypeDef;
 
-Lamport_TypeDef* Lamport_init(key_t *key);
+int Lamport_init(key_t *key, int nprocs, int id, Lamport_TypeDef *lamport);
 
-int Lamport_lock(pid_t pid);
+int Lamport_lock(Lamport_TypeDef *lamport);
 
-int Lamport_unlock(pid_t pid);
+int Lamport_unlock(Lamport_TypeDef *lamport);
 
 int Lamport_remove(Lamport_TypeDef *lamport);
 
