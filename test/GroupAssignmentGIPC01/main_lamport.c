@@ -28,10 +28,45 @@
  * along with SysProgG3.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #include "GroupAssignmentGIPC01/lamport.h"
 
 int main(int argc, char **argv)
 {
+	if(argc < 2)
+	{
+		fprintf(stderr,"Usage:\n\t%s [number_of_procs]\n",argv[0]);
+		exit(EXIT_FAILURE);
+	}
+
+	int nprocs = atoi(argv[1]);
+
+	int act_id;
+	pid_t child_pid;
+	for(act_id = 0; (child_pid = fork()) != 0 && act_id < nprocs; act_id++);
+
+	if(child_pid == 0)
+	{
+		char string_id[128];
+		snprintf(string_id,128,"%d",act_id);
+		// TODO: path to executable to be fixed or direclty write the child task...
+		execl("path/to/exec","lamport",string_id,(char*)NULL);
+		exit(EXIT_FAILURE);
+	}
+
+	for(int i = 0; i<nprocs ;i++)
+	{
+		int ret;
+		wait(&ret);
+		if(ret != EXIT_SUCCESS)
+		{
+			fprintf(stderr,"Something went wrong...\n");
+			exit(ret);
+		}
+	}
+
 	exit(EXIT_SUCCESS);
 }

@@ -1,8 +1,8 @@
 # Lista degli eseguibili da generare (vedi nelle recipe per la generazione)
-EXECS = 
+EXECS = GIPC01_lamport_test
 
 # Recupero il nome del modulo in analisi
-MODULE_NAME = $(notdir $(shell pwd))
+MODULE_NAME = $(notdir $(shell pwd))_test
 
 # ------------ CALCOLO DELLE DIPENDENZE ------------
 
@@ -31,7 +31,6 @@ BUILD_DIR = $(BUILD)/$(MODULE_NAME)
 BIN_DIR = $(BUILD_DIR)/bin
 
 # Genero le path assolute degli object file e dell'eseguibile
-OBJS_ABSPATH = $(addprefix $(BUILD_DIR)/,$(OBJS))
 EXECS_ABSPATH = $(addprefix $(BIN_DIR)/,$(EXECS))
 
 # Genero path relativa per gli include file del modulo
@@ -39,9 +38,9 @@ INCLUDE_REL = $(shell realpath --relative-to . $(INCLUDE))
 
 # ------------ DEFINIZIONE DELLE RECIPES ------------
 
-.PHONY: all clean
+.PHONY: all clean test
 
-all: $(OBJS_ABSPATH)
+all: $(EXECS_ABSPATH)
 
 depend:
 	makedepend -I $(INCLUDE_REL) $(SRCS) -Y /usr/include
@@ -55,6 +54,10 @@ depend:
 #	-mkdir -p $(dir $@)
 #	$(CC) $(LFLAGS) -o $@ $^
 
+$(BIN_DIR)/GIPC01_lamport_test : $(BUILD_DIR)/main_lamport.o $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $^
+
 # Gestione delle dipendenze
 $(DEPS_ABSPATH):
 	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D)) $@
@@ -64,11 +67,15 @@ $(BUILD)/$(MODULE_NAME)/%.o: %.c $(MY_INCLUDES)
 	-mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -I$(INCLUDE) -c -o $@ $(notdir $(basename $@)).c
 
+test:
+	for e in $(EXECS_ABSPATH); do \
+		$$e; \
+	done
+
 clean: 
 	rm -f *~ *.bak $(BUILD)/$(MODULE_NAME)/*.o $(EXECS_ABSPATH)
 
 # DO NOT DELETE
 
-lamport.o: ../../include/CommonAssignmentIPC01/libsp.h
-lamport.o: ../../include/GroupAssignmentGIPC01/lamport.h
-lamport.o: ../../include/lib/queue.h ../../include/lib/lib.h
+main_lamport.o: ../../include/GroupAssignmentGIPC01/lamport.h
+main_lamport.o: ../../include/lib/queue.h

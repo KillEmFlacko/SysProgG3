@@ -37,7 +37,8 @@
 #define LAMPORT_H
 
 #include <sys/types.h>
-#include "lib/queue.h"
+#include "lib/lib.h"
+#include "CommonAssignmentIPC01/libsp.h"
 
 /**
  * @brief Contains all data necessary for critical section syncronization between processes using Lamport's bakery algorithm

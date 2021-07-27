@@ -36,10 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sched.h>
-#include "CommonAssignmentIPC01/libsp.h"
 #include "GroupAssignmentGIPC01/lamport.h"
-#include "lib/lib.h"
-#include "lib/queue.h"
 
 /**
  * @brief Initialize the Lamport_TypeDef structure
