@@ -17,7 +17,7 @@ OBJS_ABSPATH = $(addprefix $(BUILD)/$(MODULE_NAME)/,$(OBJS))
 all: $(OBJS_ABSPATH)
 
 depend:
-	makedepend -I $(INCLUDE) $(SRCS)
+	makedepend -I $(INCLUDE) $(SRCS) -Y /usr/include
 	for dir in $(SUBDIRS); do \
 		$(MAKE) -C $$dir $@; \
 	done

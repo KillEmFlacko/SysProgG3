@@ -72,7 +72,7 @@ $(BIN_DIR)/CAIPC01_msgq_test : $(BUILD_DIR)/main_msgq.o $(DEPS_ABSPATH)
 
 # Gestione delle dipendenze
 $(DEPS_ABSPATH):
-	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D))
+	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D)) $@
 
 # Recipe per gli object files
 $(BUILD)/$(MODULE_NAME)/%.o: %.c $(MY_INCLUDES)

@@ -69,6 +69,6 @@ clean:
 
 # DO NOT DELETE
 
-lamport.o: ../../include/CommonAssignmentIPC01/libsp.h
 lamport.o: ../../include/GroupAssignmentGIPC01/lamport.h
-lamport.o: ../../include/lib/queue.h ../../include/lib/lib.h
+lamport.o: ../../include/lib/lib.h
+lamport.o: ../../include/CommonAssignmentIPC01/libsp.h

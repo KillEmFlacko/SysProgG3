@@ -38,7 +38,7 @@ INCLUDE_REL = $(shell realpath --relative-to . $(INCLUDE))
 
 .PHONY: all clean
 
-all: $(OBJS_ABSPATH) $(DEPS_ABSPATH)
+all: $(OBJS_ABSPATH)
 
 depend:
 	makedepend -I $(INCLUDE_REL) $(SRCS) -Y /usr/include
@@ -53,15 +53,12 @@ depend:
 
 # Gestione delle dipendenze
 $(DEPS_ABSPATH):
-	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D))
+	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D)) $@
 
 # Recipe per gli object files
 $(BUILD)/$(MODULE_NAME)/%.o: %.c $(MY_INCLUDES) $(TMP_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -I$(INCLUDE) -c -o $@ $(notdir $(basename $@)).c
-
-$(TMP_ABSPATH):
-	echo "ciccio" > $@
 
 clean: 
 	rm -f *~ *.bak $(BUILD)/$(MODULE_NAME)/*.o $(EXEC_ABSPATH)

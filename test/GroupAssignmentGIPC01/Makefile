@@ -78,4 +78,5 @@ clean:
 # DO NOT DELETE
 
 main_lamport.o: ../../include/GroupAssignmentGIPC01/lamport.h
-main_lamport.o: ../../include/lib/queue.h
+main_lamport.o: ../../include/lib/lib.h
+main_lamport.o: ../../include/CommonAssignmentIPC01/libsp.h
