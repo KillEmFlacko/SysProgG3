@@ -3,5 +3,7 @@
 
 int add(int a, int b);
 
+int array_max(int* array, int len, int *max_index);
+
 #endif
 

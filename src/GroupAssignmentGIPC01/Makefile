@@ -3,6 +3,7 @@ EXECS = dining_philosophers
 
 # Additional linking options
 LFLAGS += -pthread
+EXECS = 
 
 # Recupero il nome del modulo in analisi
 MODULE_NAME = $(notdir $(shell pwd))
@@ -34,6 +35,7 @@ BUILD_DIR = $(BUILD)/$(MODULE_NAME)
 BIN_DIR = $(BUILD_DIR)/bin
 
 # Genero le path assolute degli object file e dell'eseguibile
+OBJS_ABSPATH = $(addprefix $(BUILD_DIR)/,$(OBJS))
 EXECS_ABSPATH = $(addprefix $(BIN_DIR)/,$(EXECS))
 
 # Genero path relativa per gli include file del modulo
@@ -43,7 +45,7 @@ INCLUDE_REL = $(shell realpath --relative-to . $(INCLUDE))
 
 .PHONY: all clean
 
-all: $(EXECS_ABSPATH)
+all: $(OBJS_ABSPATH)
 
 depend:
 	makedepend -I $(INCLUDE_REL) $(SRCS) -Y /usr/include
@@ -63,7 +65,7 @@ $(BIN_DIR)/dining_philosophers : $(BUILD_DIR)/dining_philosophers.o $(DEPS_ABSPA
 
 # Gestione delle dipendenze
 $(DEPS_ABSPATH):
-	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D))
+	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D)) $@
 
 # Recipe per gli object files
 $(BUILD)/$(MODULE_NAME)/%.o: %.c $(MY_INCLUDES)
@@ -76,3 +78,6 @@ clean:
 # DO NOT DELETE
 
 dining_philosophers.o: ../../include/CommonAssignmentIPC01/libsp.h
+lamport.o: ../../include/GroupAssignmentGIPC01/lamport.h
+lamport.o: ../../include/lib/lib.h
+lamport.o: ../../include/CommonAssignmentIPC01/libsp.h
