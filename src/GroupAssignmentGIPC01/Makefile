@@ -3,7 +3,6 @@ EXECS = dining_philosophers
 
 # Additional linking options
 LFLAGS += -pthread
-EXECS = 
 
 # Recupero il nome del modulo in analisi
 MODULE_NAME = $(notdir $(shell pwd))
