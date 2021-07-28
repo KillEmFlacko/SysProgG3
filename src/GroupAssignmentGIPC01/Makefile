@@ -1,5 +1,8 @@
 # Lista degli eseguibili da generare (vedi nelle recipe per la generazione)
-EXECS = program
+EXECS = dining_philosophers
+
+# Additional linking options
+LFLAGS += -pthread
 
 # Recupero il nome del modulo in analisi
 MODULE_NAME = $(notdir $(shell pwd))
@@ -54,7 +57,7 @@ depend:
 #	-mkdir -p $(dir $@)
 #	$(CC) $(LFLAGS) -o $@ $^
 
-$(BIN_DIR)/program : $(BUILD_DIR)/main.o $(DEPS_ABSPATH)
+$(BIN_DIR)/dining_philosophers : $(BUILD_DIR)/dining_philosophers.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
@@ -72,4 +75,4 @@ clean:
 
 # DO NOT DELETE
 
-main.o: ../../include/lib/lib.h
+dining_philosophers.o: ../../include/CommonAssignmentIPC01/libsp.h

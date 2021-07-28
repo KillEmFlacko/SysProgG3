@@ -80,6 +80,18 @@ $(BIN_DIR)/consumer_queue : $(BUILD_DIR)/main_cons_queue.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
+$(BIN_DIR)/readwrite_file : $(BUILD_DIR)/readwrite_file.o $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $^
+
+$(BIN_DIR)/readwrite_queue : $(BUILD_DIR)/readwrite_queue.o $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $^
+
+$(BIN_DIR)/readwrite_var : $(BUILD_DIR)/readwrite_var.o $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $^
+
 #$(BIN_DIR)/readwrite : $(BUILD_DIR)/readwrite_sem.o $(DEPS_ABSPATH)
 #	-mkdir -p $(dir $@)
 #	$(CC) $(LFLAGS) -o $@ $^
