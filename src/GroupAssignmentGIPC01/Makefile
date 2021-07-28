@@ -1,5 +1,5 @@
 # Lista degli eseguibili da generare (vedi nelle recipe per la generazione)
-EXECS = dining_philosophers
+EXECS = dining_philosophers lamport
 
 # Additional linking options
 LFLAGS += -pthread
@@ -59,6 +59,10 @@ depend:
 #	$(CC) $(LFLAGS) -o $@ $^
 
 $(BIN_DIR)/dining_philosophers : $(BUILD_DIR)/dining_philosophers.o $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $^
+
+$(BIN_DIR)/lamport : $(BUILD_DIR)/lamport.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 

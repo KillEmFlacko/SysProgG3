@@ -1,5 +1,5 @@
 # Lista degli eseguibili da generare (vedi nelle recipe per la generazione)
-EXECS = producer consumer producer_array consumer_array producer_queue consumer_queue #readwrite
+EXECS = producer consumer producer_array consumer_array producer_queue consumer_queue readwrite_file readwrite_queue readwrite_var
 LFLAGS += -pthread
 
 # Recupero il nome del modulo in analisi

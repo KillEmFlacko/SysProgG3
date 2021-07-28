@@ -142,8 +142,8 @@ int main(int argc, char **argv)
     fprintf(stdout,"Initializing shm...\n");
 
     // Attach shared memory to data
-    get_shm(&key0, (char**)&value, sizeof(int));
-    get_shm(&key1, (char**)&n_readers, sizeof(int));
+    get_shm(&key0, (char**)&value, sizeof(int), NULL);
+    get_shm(&key1, (char**)&n_readers, sizeof(int), NULL);
 
     // Reset value in case of existing shm
     *value = 0;
