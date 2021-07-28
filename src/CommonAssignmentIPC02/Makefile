@@ -1,5 +1,6 @@
 # Lista degli eseguibili da generare (vedi nelle recipe per la generazione)
 EXECS = producer consumer producer_array consumer_array producer_queue consumer_queue #readwrite
+LFLAGS += -pthread
 
 # Recupero il nome del modulo in analisi
 MODULE_NAME = $(notdir $(shell pwd))
