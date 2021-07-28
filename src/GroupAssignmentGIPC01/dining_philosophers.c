@@ -43,11 +43,11 @@
 #define NUM_PHILOSOPHERS 10
 #define LEN 30
 
-sem_t table;
-sem_t stick[NUM_PHILOSOPHERS];
-int phil_id[NUM_PHILOSOPHERS];
+sem_t table;	// Semaphore of the table
+sem_t stick[NUM_PHILOSOPHERS];	// Set of semaphores. One for every row
+int phil_id[NUM_PHILOSOPHERS];	// Numerical id to differentiate philosophers
 
-char text[NUM_PHILOSOPHERS][LEN];
+char text[NUM_PHILOSOPHERS][LEN];	// Resource
 
 void* philosopher(void*);
 void eat(int);
@@ -55,6 +55,14 @@ void init_sem(sem_t *, sem_t *, int);
 void start_eating(pthread_t *);
 void filltext();
 
+/**
+ * @brief Main method
+ * Each philosopher to perform his action need to obtain two adiacent rows of the
+ * resource that in the general problem represents the sticks.
+ * Thread related to philosphers are started and after their termination is
+ * expected.
+ * 
+ */
 int main()
 {
 	pthread_t tid[NUM_PHILOSOPHERS];
@@ -67,18 +75,36 @@ int main()
 	
 	for(int i=0; i<NUM_PHILOSOPHERS; i++)
 		pthread_join(tid[i],NULL);
+
+	printf("\nAll philosophers have eaten");
+
+	return 0;
 }
 
-void init_sem(sem_t *table, sem_t *stick, int num_forks)
+/**
+ * @brief Initialize the semaphores
+ *
+ * @param table semaphore associated with the table
+ * @param stick set of semaphores associated with the resources
+ * @param num_sticks number of resources at disposal
+ * 
+ */
+void init_sem(sem_t *table, sem_t *stick, int num_sticks)
 {
-  for (int i = 0; i < num_forks; i++) 
+  for (int i = 0; i < num_sticks; i++) 
   {
     	sem_init(&stick[i], 0, 1);
   }
 
-  sem_init(table, 0, num_forks - 1);
+  sem_init(table, 0, num_sticks - 1);
 }
 
+/**
+ * @brief Creates the tread associated to the task of each philosopher
+ *
+ * @param tid pointer to the threads structure
+ * 
+ */
 void start_eating(pthread_t *tid)
 {
 	for (int i=0; i<NUM_PHILOSOPHERS; i++)
@@ -88,6 +114,12 @@ void start_eating(pthread_t *tid)
 	}
 }
 
+/**
+ * @brief Definition of the operation that each philosopher sholud do
+ *
+ * @param num identificative number of the philosopher
+ * 
+ */
 void* philosopher(void *num)
 {
 	int phil= *(int *)num;
@@ -97,39 +129,48 @@ void* philosopher(void *num)
 
 	// Dijkstra solution
 	if (phil % 2) 
-	{
+	{	
 		// Take first the left stick and then the right
 		sem_wait(&stick[phil]);
 		printf("\nPhilosopher %d take %s", phil, text[phil]);
-		sem_wait(&stick[(phil+1)%5]);
-		printf("\nPhilosopher %d take %s", phil, text[(phil+1)%5]);
+		sem_wait(&stick[(phil+1)%NUM_PHILOSOPHERS]);
+		printf("\nPhilosopher %d take %s", phil, text[(phil+1)%NUM_PHILOSOPHERS]);
 	}
 	else
 	{
 		// Take first the right stick and then the left
-		sem_wait(&stick[(phil+1)%5]);
+		sem_wait(&stick[(phil+1)%NUM_PHILOSOPHERS]);
+		printf("\nPhilosopher %d take %s", phil, text[(phil+1)%NUM_PHILOSOPHERS]);
 		sem_wait(&stick[phil]);
+		printf("\nPhilosopher %d take %s", phil, text[phil]);
 	}
 
-	sem_wait(&stick[phil]);
-	sem_wait(&stick[(phil+1)%5]);
-
 	eat(phil);
-	sleep(5);
+	sleep(3);
 	printf("\nPhilosopher %d has finished eating", phil);
 
-	sem_post(&stick[(phil+1)%5]);
 	sem_post(&stick[phil]);
+	sem_post(&stick[(phil+1)%NUM_PHILOSOPHERS]);
 	sem_post(&table);
 
 	pthread_exit(0);
 }
 
+/**
+ * @brief Action performed by the philosopher
+ *
+ * @param phil identificative number of the philosopher
+ * 
+ */
 void eat(int phil)
 {
 	printf("\nPhilosopher %d is eating", phil);
 }
 
+/**
+ * @brief Fill the resource shared by philosophers
+ *
+ */
 void filltext()
 {
 	for (int i=0; i < NUM_PHILOSOPHERS; i++)
