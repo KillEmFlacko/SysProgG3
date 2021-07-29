@@ -801,8 +801,73 @@ void dnfs_usage()
     abort();
 }
 
+
+#define ERRMSG_MAX_LEN 128
 int main(int argc, char *argv[])
 {
+    // Creation of the necessary directories and moving of the executables into the rood dir of the file system to mount
+    char error_string[ERRMSG_MAX_LEN];
+    if(mkdir("build/CommonAssignmentFS01/fs", 
+        S_IRUSR | S_IWUSR | S_IXUSR |
+		S_IRGRP | S_IWGRP | S_IXGRP |
+		S_IROTH | S_IWOTH | S_IXOTH) == -1)
+    {
+        // if directory already exists
+        if(errno == EEXIST)
+        {
+            perror("Directory build/CommonAssignmentFS01/fs already existing");
+        }
+        // another error occurs
+        else
+        {
+            snprintf(error_string,ERRMSG_MAX_LEN,"mkdir(dir_name: build/CommonAssignmentFS01/fs) - Cannot create the directory, try to manually remove the directory");
+		    perror(error_string);
+		    exit(EXIT_FAILURE);
+        }
+    }
+    if(mkdir("build/CommonAssignmentFS01/fs/rootDir", 
+        S_IRUSR | S_IWUSR | S_IXUSR |
+		S_IRGRP | S_IWGRP | S_IXGRP |
+		S_IROTH | S_IWOTH | S_IXOTH) == -1)
+    {
+        // if directory already exists
+        if(errno == EEXIST)
+        {
+            perror("Directory build/CommonAssignmentFS01/fs/rootDir already existing");
+        }
+        // another error occurs
+        else
+        {
+            snprintf(error_string,ERRMSG_MAX_LEN,"mkdir(dir_name: build/CommonAssignmentFS01/fs/rootDir) - Cannot create the directory, try to manually remove the directory");
+		    perror(error_string);
+		    exit(EXIT_FAILURE);
+        }
+    }
+    if(mkdir("build/CommonAssignmentFS01/fs/mountPoint", 
+        S_IRUSR | S_IWUSR | S_IXUSR |
+		S_IRGRP | S_IWGRP | S_IXGRP |
+		S_IROTH | S_IWOTH | S_IXOTH) == -1)
+    {
+        // if directory already exists
+        if(errno == EEXIST)
+        {
+            perror("Directory build/CommonAssignmentFS01/fs/mountPoint already existing");
+        }
+        // another error occurs
+        else
+        {
+            snprintf(error_string,ERRMSG_MAX_LEN,"mkdir(dir_name: build/CommonAssignmentFS01/fs/mountPoint) - Cannot create the directory, try to manually remove the directory");
+		    perror(error_string);
+		    exit(EXIT_FAILURE);
+        }
+    }
+
+    // moving executables
+    rename("build/CommonAssignmentFS01/bin/write_char_by_char", "build/CommonAssignmentFS01/fs/rootDir/write_char_by_char");
+    rename("build/CommonAssignmentFS01/bin/write_line_by_line", "build/CommonAssignmentFS01/fs/rootDir/write_line_by_line");
+        
+
+
     int fuse_stat;
     struct dnfs_state *dnfs_data;
 

@@ -42,8 +42,8 @@
 #include <limits.h>
 
 #define ERRMSG_MAX_LEN 128
-#define FILENAME_READ "../../../data/primo_canto_div_comm.txt"
-#define FILENAME_WRITE "char_by_char.txt"
+#define FILENAME_READ "data/primo_canto_div_comm.txt"
+#define FILENAME_WRITE "char_by_char.txt" // generated near the executable
 
 int main(int argc, char* argv[]){
     int fd1, fd2;

@@ -44,8 +44,8 @@
 
 #define ERRMSG_MAX_LEN 128
 #define MAX_LINE_LEN 128
-#define FILENAME_READ "../../../data/primo_canto_div_comm.txt"
-#define FILENAME_WRITE "line_by_line.txt"
+#define FILENAME_READ "data/primo_canto_div_comm.txt"
+#define FILENAME_WRITE "line_by_line.txt" // generated near the executable
 
 int main(int argc, char* argv[]){
     int fd1, fd2;
