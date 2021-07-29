@@ -121,6 +121,8 @@ int wait_cond(Monitor *mon, int cond_num);
 
 int signal_cond(Monitor *mon, int cond_num);
 
+int broadcast_cond(Monitor *mon, int cond_num);
+
 /*Routine remove_monitor */
 void remove_monitor(Monitor *mon);
 

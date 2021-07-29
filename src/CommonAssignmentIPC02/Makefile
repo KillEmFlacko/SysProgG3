@@ -18,7 +18,7 @@ MY_INCLUDES = \
 DEPS = $(sort $(filter-out /$(MODULE_NAME)/, $(dir $(patsubst $(INCLUDE)%,%,$(MY_INCLUDES)))))
 
 # Genero le path assolute dei relativi file oggetto
-DEPS_AB SPATH = \
+DEPS_ABSPATH = \
 	$(foreach dep,$(DEPS), \
 		$(patsubst $(SRC)%.c,$(BUILD)%.o,$(shell find $(SRC)$(dep)*.c)) \
 	 )

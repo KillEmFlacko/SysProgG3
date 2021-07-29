@@ -816,6 +816,65 @@ int signal_cond(Monitor *mon,int cond_num)
 }
 
 /**
+ * @brief Signal broadcast on a specified condition of Monitor
+ *
+ * @param mon pointer to the struct of the Monitor
+ * @param cond_num number of semaphore of the set associated to the condition to be considered
+ * @retval 0 if all OK, -1 on error
+ */
+int broadcast_cond(Monitor *mon, int cond_num)
+{
+	int is_empty = IS_queue_empty(mon, cond_num);
+	char error_string[ERRMSG_MAX_LEN];
+	if(is_empty == -1)
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"signal_cond(mon: %p, cond_num: %d) - Cannot signal the selected semaphore", mon, cond_num);
+		perror(error_string);
+		return -1;
+	}
+	if(!is_empty)
+	{
+		/*
+		 * Get number of processes in queue
+		 */
+		int n_queue = semctl(mon -> id_cond, cond_num, GETNCNT);
+		if(n_queue == -1)
+		{
+			snprintf(error_string,ERRMSG_MAX_LEN,"signal_cond(mon: %p, cond_num: %d) - Cannot get num procs in queue", mon, cond_num);
+			perror(error_string);
+			return -1;
+		}
+
+		/*
+		 * Define semaphore operation
+		 */
+		struct sembuf op;
+		op.sem_num = cond_num;
+		op.sem_op = n_queue; // Signal operation, releasing resources
+		op.sem_flg = 0; // WARNING: conversion from int to short
+
+		/*
+		 * Release a resource for each process in queue
+		 */
+		if(semop(mon->id_cond,&op,1) == -1) {
+			snprintf(error_string,ERRMSG_MAX_LEN,"signal_cond(mon: %p, cond_num: %d) - Cannot signal condition", mon, cond_num);
+			perror(error_string);
+			return -1;
+		}
+
+		if(wait_sem(mon->id_mutex, I_PREEMPT, 0) == -1)
+		{
+			wait_sem(mon->id_cond,cond_num,0); // If signal is ok and we are in an atomic procedure no problem can occur on cond semaphore
+			snprintf(error_string,ERRMSG_MAX_LEN,"signal_cond(mon: %p, cond_num: %d) - Cannot signal the selected semaphore", mon, cond_num);
+			perror(error_string);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+/**
  * @brief Remove the monitor
  *
  * @param mon pointer to the monitor
