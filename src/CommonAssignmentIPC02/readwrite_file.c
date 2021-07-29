@@ -41,7 +41,7 @@
 #include "CommonAssignmentIPC01/libsp.h"
 #include "lib/lib.h"
 
-#define NCOND 3     // Number of semaphores
+#define NCOND 3             // Number of semaphores
 #define S_WRITE 0           // Semaphore for writing lock
 #define S_NUM_READERS 1     // Semaphore on the counter variable
 #define S_QUEUE 2           // Semaphore for the process queue

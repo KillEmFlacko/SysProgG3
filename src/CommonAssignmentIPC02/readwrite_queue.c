@@ -1,16 +1,60 @@
+/*
+ * Course: System Programming 2020/2021
+ *
+ * Lecturers:
+ * Alessia		Saggese asaggese@unisa.it
+ * Francesco	Moscato	fmoscato@unisa.it
+ *
+ * Group:
+ * D'Alessio	Simone		0622701120	s.dalessio8@studenti.unisa.it
+ * Falanga		Armando		0622701140  a.falanga13@studenti.unisa.it
+ * Fattore		Alessandro  0622701115  a.fattore@studenti.unisa.it
+ *
+ * Copyright (C) 2021 - All Rights Reserved
+ *
+ * This file is part of SysProgG3.
+ *
+ * SysProgG3 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * SysProgG3 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with SysProgG3.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/**
+  @file readwrite_file.c
+  @brief Performs the reader/writer problem in the case that the shared resource is a variable
+  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "CommonAssignmentIPC01/libsp.h"
 #include "lib/lib.h"
 
-#define NCOND 3
-#define S_WRITE 0
-#define S_NUM_READERS 1
-#define S_QUEUE 2
+#define NCOND 3             // Number of semaphores
+#define S_WRITE 0           // Semaphore for writing lock
+#define S_NUM_READERS 1     // Semaphore on the counter variable
+#define S_QUEUE 2           // Semaphore for the process queue
 
 #define BUFFER_SIZE 100
 
+/**
+ * @brief Definition of the queue struct composed by a circular array
+ * 
+ * @param batch array of dimension BUFFER_SIZE that contains element
+ * @param front index of the youngest element of the queue
+ * @param back index of the oldest element of the queue
+ * @param num_elements inumber of elements presents in the queue
+ * 
+ */
 typedef struct {
     int batch[BUFFER_SIZE];
     int front;
@@ -18,6 +62,12 @@ typedef struct {
     int num_elements;
 } Queue;
 
+/**
+ * @brief Initialization of the queue
+ * 
+ * @param q pointer to the queue struct
+ * 
+ */
 Queue* initQueue(Queue* q)
 {
     q -> front = q -> back = 0;
@@ -25,6 +75,13 @@ Queue* initQueue(Queue* q)
     return q;
 }
 
+/**
+ * @brief Adding an element to the front of the queue
+ * 
+ * @param q pointer to the queue struct
+ * @param val value to add
+ * 
+ */
 int push(Queue* q, int val)
 {
     if((++(q -> num_elements)) == BUFFER_SIZE) return -1;
@@ -33,6 +90,12 @@ int push(Queue* q, int val)
     return 0;
 }
 
+/**
+ * @brief Getting the element to the back of the queue
+ * 
+ * @param q pointer to the queue struct
+ * 
+ */
 int pop(Queue* q)
 {
     if (q -> num_elements == 0) return -1;
@@ -42,17 +105,25 @@ int pop(Queue* q)
     return returnValue;
 }
 
+/**
+ * @brief Adds an element to the queue
+ * 
+ * @param sem set of semaphores associated to the problem
+ * @param q pointer to the queue struct
+ * @param new_val new value to add
+ * 
+ */
 void writer(int sem, Queue *q, int new_val)
 {
-    printf("\n### INIZIO PROCESSO SCRITTURA ###\n");
+    printf("\n### STARTING WRITER PROCESS ###\n");
 
-    printf("Mi metto in coda per la scrittura\n");
+    printf("I queue for writing\n");
     wait_sem(sem, S_QUEUE, 0);
 
-    printf("Giunto il mio turno richiedo accesso esclusivo alla risorsa\n");
+    printf("When it is my turn I ask for the exclusive access to the resource\n");
     wait_sem(sem, S_WRITE, 0);
 
-    printf("Esco dalla coda di attesa\n");
+    printf("Resource get. Exiting from the waiting queue\n");
     signal_sem(sem, S_QUEUE, 0);
 
     printf("<< CRITICAL SECTION >>\n*\n*\n");
@@ -64,28 +135,36 @@ void writer(int sem, Queue *q, int new_val)
 
     signal_sem(sem, S_WRITE, 0);
     
-    printf("### FINE PROCESSO SCRITTURA ###\n\n");
+    printf("\n### END OF WRITER PROCESS ###\n");
 }
 
+/**
+ * @brief Gets an element from the queue removing it
+ * 
+ * @param sem set of semaphores associated to the problem
+ * @param nr counter of the number of readers
+ * @param q pointer to the queue struct
+ * 
+ */
 void reader(int sem, int *nr, Queue *q)
 {
-    printf("\n### INIZIO PROCESSO LETTURA ###\n");
+    printf("\n### STARTING READER PROCESS ###\n");
 
-    printf("Mi metto in coda per la lettura\n");
+    printf("I queue for reading\n");
     wait_sem(sem, S_QUEUE, 0);
 
-    printf("Chiedo l'accesso esclusivo al contatore dei lettori (+)\n");
+    printf("I request the esclusive access to the reader counter (+)\n");
     wait_sem(sem, S_NUM_READERS, 0);
     ++(*nr);
-    printf("Numero lettori: %d\n", *nr);
+    printf("Number of readers: %d\n", *nr);
     if (*nr == 1)
     {
-        printf("Sono il primo lettore\n");
+        printf("I'm the first reader\n");
         wait_sem(sem, S_WRITE, 0);
     }
-    printf("Esco dalla coda dei processi in attesa\n");
+    printf("Exiting from the waiting queue\n");
     signal_sem(sem, S_QUEUE, 0);
-    printf("Rilascio l'accesso al contatore dei lettori\n");
+    printf("I release the access to the reader counter\n");
     signal_sem(sem, S_NUM_READERS, 0);
 
     printf("<< CRITICAL SECTION >>\n");
@@ -94,18 +173,18 @@ void reader(int sem, int *nr, Queue *q)
 
     printf("<< EXIT SECTION >>\n");
 
-    printf("Chiedo l'accesso esclusivo al contatore dei lettori (-)\n");
+    printf("I request the esclusive access to the reader counter (-)\n");
     wait_sem(sem, S_NUM_READERS, 0);
     --(*nr);
     if (*nr == 0)
     {
-        printf("Sono l'ultimo lettore che rilascia la risorsa\n");
+        printf("I'm the last reader to release the resource\n");
         signal_sem(sem, S_WRITE, 0);
     }   
-    printf("Rilascio l'accesso al contatore dei lettori\n");
+    printf("I release the access to the reader counter\n");
     signal_sem(sem, S_NUM_READERS, 0);
 
-    printf("### FINE PROCESSO LETTURA ###\n\n");
+    printf("### END OF READING PROCESS ###\n\n");
 }
 
 int main(int argc, char **argv)
