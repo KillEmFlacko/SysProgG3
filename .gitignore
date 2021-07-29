@@ -8,3 +8,4 @@ doc
 *.old
 .*
 compile_commands.json
+test-hpfs-partition
