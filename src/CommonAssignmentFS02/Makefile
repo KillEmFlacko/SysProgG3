@@ -1,26 +1,18 @@
 # Lista degli eseguibili da generare (vedi nelle recipe per la generazione)
-EXECS = program
+EXECS = hpfs
 
 # Recupero il nome del modulo in analisi
 MODULE_NAME = $(notdir $(shell pwd))
 
+CFLAGS_hpfs.o := -Wno-error=unused-command-line-argument
+
 # ------------ CALCOLO DELLE DIPENDENZE ------------
+
+# Include files
 
 # Prendo gli include in ogni source file
 SRCS=$(shell find *.c 2>/dev/null)
-MY_INCLUDES = \
-	$(foreach src, $(SRCS), \
-		$(filter $(INCLUDE)%,$(shell $(CC) -I $(INCLUDE) -M $(src)))\
-	 )
-
-# Trasformo gli include in moduli di dipendenza 
-DEPS = $(sort $(filter-out /$(MODULE_NAME)/, $(dir $(patsubst $(INCLUDE)%,%,$(MY_INCLUDES)))))
-
-# Genero le path assolute dei relativi file oggetto
-DEPS_ABSPATH = \
-	$(foreach dep,$(DEPS), \
-		$(patsubst $(SRC)%.c,$(BUILD)%.o,$(shell find $(SRC)$(dep)*.c)) \
-	 )
+MY_INCLUDES = $(wildcard $(INCLUDE)/$(MODULE_NAME)/*.h)
 
 # ------------ GENERAZIONE PATH ASSOLUTE ------------
 
@@ -40,13 +32,31 @@ INCLUDE_REL = $(shell realpath --relative-to . $(INCLUDE))
 
 .PHONY: all clean
 
-all: $(EXECS_ABSPATH)
+# Depends on bin/include bin/*.c and bin/Makefile
+all: $(addprefix $(BUILD_DIR)/,$(MODULE_NAME)) $(addprefix $(BUILD_DIR)/,$(SRCS)) $(BUILD_DIR)/Makefile
+	make -C /lib/modules/$(shell uname -r)/build M=$(BUILD_DIR) modules
 
-depend:
-	makedepend -I $(INCLUDE_REL) $(SRCS) -Y /usr/include
-	for dir in $(SUBDIRS); do \
-		$(MAKE) -C $$dir $@; \
-	done
+# Create a symlink from src to bin
+$(BUILD_DIR)/%.c: $(SRC)/$(MODULE_NAME)/%.c
+	-mkdir -p $(dir $@)
+	ln -s $< $@
+
+# Create a symlink from src to bin
+$(BUILD_DIR)/$(MODULE_NAME): $(INCLUDE)/$(MODULE_NAME)
+	-mkdir -p $(dir $@)
+	ln -s $< $@
+
+# Generate a Makefile with the needed obj-m and mymodule-objs set
+$(BUILD_DIR)/Makefile:
+	-mkdir -p $(dir $@)
+	# TODO: command line argument fix
+	printf "obj-m += $(EXECS).o\n$(EXECS)-objs := $(subst $(EXECS).o,, $(subst .c,.o,$(subst $(SRC)/,,$(SRCS))))\n" > $@
+
+#depend:
+#	makedepend -I $(INCLUDE_REL) $(SRCS) -Y /usr/include
+#	for dir in $(SUBDIRS); do \
+#		$(MAKE) -C $$dir $@; \
+#	done
 
 # Template recipe per gli eseguibili
 #
@@ -54,22 +64,18 @@ depend:
 #	-mkdir -p $(dir $@)
 #	$(CC) $(LFLAGS) -o $@ $^
 
-$(BIN_DIR)/program : $(BUILD_DIR)/main.o $(DEPS_ABSPATH)
-	-mkdir -p $(dir $@)
-	$(CC) $(LFLAGS) -o $@ $^
-
 # Gestione delle dipendenze
-$(DEPS_ABSPATH):
-	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D)) $@
+#$(DEPS_ABSPATH):
+#	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D)) $@
 
 # Recipe per gli object files
-$(BUILD)/$(MODULE_NAME)/%.o: %.c $(MY_INCLUDES)
-	-mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -I$(INCLUDE) -c -o $@ $(notdir $(basename $@)).c
+#$(BUILD)/$(MODULE_NAME)/%.o: %.c $(MY_INCLUDES)
+#	-mkdir -p $(dir $@)
+#	$(CC) $(CFLAGS) -I$(INCLUDE) -c -o $@ $(notdir $(basename $@)).c
 
 clean: 
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
 	rm -f *~ *.bak $(BUILD)/$(MODULE_NAME)/*.o $(EXECS_ABSPATH)
 
 # DO NOT DELETE
 
-main.o: ../../include/lib/lib.h
