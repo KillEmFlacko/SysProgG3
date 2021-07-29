@@ -4,8 +4,6 @@ EXECS = hpfs
 # Recupero il nome del modulo in analisi
 MODULE_NAME = $(notdir $(shell pwd))
 
-CFLAGS_hpfs.o := -Wno-error=unused-command-line-argument
-
 # ------------ CALCOLO DELLE DIPENDENZE ------------
 
 # Include files
