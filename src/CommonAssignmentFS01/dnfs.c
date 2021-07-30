@@ -805,7 +805,7 @@ void dnfs_usage()
 #define ERRMSG_MAX_LEN 128
 int main(int argc, char *argv[])
 {
-    // Creation of the necessary directories and moving of the executables into the rood dir of the file system to mount
+    // Creation of the necessary directories and moving of the executables into the root dir of the file system to mount
     char error_string[ERRMSG_MAX_LEN];
     if(mkdir("build/CommonAssignmentFS01/fs", 
         S_IRUSR | S_IWUSR | S_IXUSR |
@@ -863,8 +863,66 @@ int main(int argc, char *argv[])
     }
 
     // moving executables
-    rename("build/CommonAssignmentFS01/bin/write_char_by_char", "build/CommonAssignmentFS01/fs/rootDir/write_char_by_char");
-    rename("build/CommonAssignmentFS01/bin/write_line_by_line", "build/CommonAssignmentFS01/fs/rootDir/write_line_by_line");
+    // write_char_by_char
+    if(access("build/CommonAssignmentFS01/bin/write_char_by_char", F_OK) == 0)
+    {
+        rename("build/CommonAssignmentFS01/bin/write_char_by_char", "build/CommonAssignmentFS01/fs/rootDir/write_char_by_char");
+    }
+    else if(access("build/CommonAssignmentFS01/fs/rootDir/write_char_by_char", F_OK) == 0)
+    {
+        fprintf(stderr, "File build/CommonAssignmentFS01/fs/rootDir/write_char_by_char already existing\n");
+    }
+    else
+    {
+        snprintf(error_string,ERRMSG_MAX_LEN,"access(file_name: build/CommonAssignmentFS01/bin/write_char_by_char) - Executable doesn't exist");
+		perror(error_string);
+		exit(EXIT_FAILURE);
+    }
+    // write_line_by_line
+    if(access("build/CommonAssignmentFS01/bin/write_line_by_line", F_OK) == 0)
+    {
+        rename("build/CommonAssignmentFS01/bin/write_line_by_line", "build/CommonAssignmentFS01/fs/rootDir/write_line_by_line");
+    }
+    else if(access("build/CommonAssignmentFS01/fs/rootDir/write_line_by_line", F_OK) == 0)
+    {
+        fprintf(stderr, "File build/CommonAssignmentFS01/fs/rootDir/write_line_by_line already existing\n");
+    }
+    else
+    {
+        snprintf(error_string,ERRMSG_MAX_LEN,"rename(file_name: build/CommonAssignmentFS01/bin/write_line_by_line) - Executable doesn't exist");
+		perror(error_string);
+		exit(EXIT_FAILURE);
+    }
+    // fifo_sendmsg
+    if(access("build/CommonAssignmentFS01/bin/fifo_sendmsg", F_OK) == 0)
+    {
+        rename("build/CommonAssignmentFS01/bin/fifo_sendmsg", "build/CommonAssignmentFS01/fs/rootDir/fifo_sendmsg");
+    }
+    else if(access("build/CommonAssignmentFS01/fs/rootDir/fifo_sendmsg", F_OK) == 0)
+    {
+        fprintf(stderr, "File build/CommonAssignmentFS01/fs/rootDir/fifo_sendmsg already existing\n");
+    }
+    else
+    {
+        snprintf(error_string,ERRMSG_MAX_LEN,"access(file_name: build/CommonAssignmentFS01/bin/fifo_sendmsg) - Executable doesn't exist");
+		perror(error_string);
+		exit(EXIT_FAILURE);
+    }
+    // fifo_rcvmsg
+    if(access("build/CommonAssignmentFS01/bin/fifo_rcvmsg", F_OK) == 0)
+    {
+        rename("build/CommonAssignmentFS01/bin/fifo_rcvmsg", "build/CommonAssignmentFS01/fs/rootDir/fifo_rcvmsg");
+    }
+    else if(access("build/CommonAssignmentFS01/fs/rootDir/fifo_rcvmsg", F_OK) == 0)
+    {
+        fprintf(stderr, "File build/CommonAssignmentFS01/fs/rootDir/fifo_rcvmsg already existing\n");
+    }
+    else
+    {
+        snprintf(error_string,ERRMSG_MAX_LEN,"access(file_name: build/CommonAssignmentFS01/bin/fifo_rcvmsg) - Executable doesn't exist");
+		perror(error_string);
+		exit(EXIT_FAILURE);
+    }
         
 
 
