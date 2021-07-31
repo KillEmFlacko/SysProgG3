@@ -65,11 +65,11 @@ $(BIN_DIR)/consumer : $(BUILD_DIR)/main_cons.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
-$(BIN_DIR)/producer_array : $(BUILD_DIR)/main_prod_array.o $(DEPS_ABSPATH)
+$(BIN_DIR)/producer_array : $(BUILD_DIR)/main_prod_array.o $(BUILD_DIR)/array.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
-$(BIN_DIR)/consumer_array : $(BUILD_DIR)/main_cons_array.o $(DEPS_ABSPATH)
+$(BIN_DIR)/consumer_array : $(BUILD_DIR)/main_cons_array.o $(BUILD_DIR)/array.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 

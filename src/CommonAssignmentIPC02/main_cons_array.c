@@ -29,22 +29,32 @@
  */
 
 /**
-  @file main_cons_array.c
-  @brief Performs the consumer in the producer/consumer problem synchronized with only semaphores in the case that the shared resource is a vector of integer variables in a shared memory
+  @file main_prod_array.c
+  @brief Performs the producer in the producer/consumer problem synchronized with only semaphores in the case that the shared resource is a vector of integer variables in a shared memory
   */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include "CommonAssignmentIPC02/array.h"
 #include "CommonAssignmentIPC01/libsp.h"
 
-int id_sem_notfull = -1, id_sem_notempty = -1, id_shared = -1;
+#define NCOND 2
+#define COND_NEWRES 0
+#define COND_HASCONSUMED 1
+
+Monitor *monitor = NULL;
+Array_TypeDef *array = NULL;
 
 void exit_procedure(void)
 {
-	if(id_shared != -1) remove_shm(id_shared);
-	if(id_sem_notfull != -1) remove_sem(id_sem_notfull);
-	if(id_sem_notempty != -1) remove_sem(id_sem_notempty);
+	if(array != NULL)
+	{
+		if(Array_remove(array))
+		{
+			remove_monitor(monitor);
+		}
+	}
 }
 
 /*
@@ -54,78 +64,90 @@ int main(int argc, char **argv)
 {
 	atexit(exit_procedure);
 
-	if(argc < 2)
+	if(argc < 3)
 	{
-		fprintf(stderr,"Usage:\t%s num_res\n",argv[0]);
+		fprintf(stderr,"Usage:\t%s num_res num_cons\n",argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
 	int nres = atoi(argv[1]);
+	int ncons = atoi(argv[2]);
 
-	key_t key_shm = ftok(KEY_FILE,1);
-	key_t key_notfull = ftok(KEY_FILE,2);
-	key_t key_notempty = ftok(KEY_FILE,3);
+	key_t key_monitor = ftok(KEY_FILE,1);
+	key_t key_array = ftok(KEY_FILE,2);
 
 	/*
-	 * Create semaphore set for NOTFULL
+	 * Create monitor
 	 */
-	if((id_sem_notfull = get_sem(&key_notfull,nres,1)) == -1)
+	if((monitor = init_monitor(&key_monitor,NCOND)) == NULL)
 	{
-		fprintf(stderr,"Cannot get notfull semaphore\n");
+		fprintf(stderr,"Cannot get monitor\n");
 		exit(EXIT_FAILURE);
 	}
 
+	enter_monitor(monitor);
+
 	/*
-	 * Create semaphore set for NOTEMPTY
+	 * Create array
 	 */
-	if((id_sem_notempty = get_sem(&key_notempty,nres,0)) == -1)
+	int my_array_id;
+	if((array = Array_init(&key_array,nres,ncons,&my_array_id)) == NULL)
 	{
-		fprintf(stderr,"Cannot get notempty semaphore\n");
+		fprintf(stderr,"Cannot get array\n");
 		exit(EXIT_FAILURE);
 	}
 
-	/*
-	 * Create and attach shared memory area
-	 */
-	int* shm_addr;
-	if((id_shared = get_shm(&key_shm,(char**)&shm_addr,sizeof(int)*nres,NULL)) == -1)
-	{
-		fprintf(stderr,"Cannot get shared memory area\n");
-		exit(EXIT_FAILURE);
-	}
+	leave_monitor(monitor);
 
 	/*
 	 * Wait for user input to consume
 	 */
 	char c;
 	int res;
+
 	printf("Press a key to consume (Ctrl-D to exit)");
 	while((c = getchar()) != EOF)
 	{
 		if(c != '\n') putchar('\n');
 
-		printf("Enter resource to use:");
-		scanf("%d",&res);
+		do
+		{
+			printf("Enter resource to use:");
+			scanf("%d",&res);
+			getchar();
+		}
+		while(!(res >= 0 && res < array->array_len));
+
+		enter_monitor(monitor);
 
 		/*
-		 * Wait for content to be avaliable and buffer to be full
+		 * white while value is not dirty
 		 */
-		if(wait_sem(id_sem_notempty,res,0) == -1)
+		while(array->bitmap[my_array_id][res] == 0)
 		{
-			fprintf(stderr,"Error while waiting full buffer\n");
+			if(wait_cond(monitor,COND_NEWRES) == -1)
+			{
+				fprintf(stderr, "Cannot wait on condition\n");
+				exit(EXIT_FAILURE);
+			}
+		}
+
+		printf("Consumed value: %d\n",array->array[res]);
+
+		/*
+		 * Unset your dirty bit in order to allow new value from
+		 * the producers
+		 */
+		Array_unsetDirty(array,res,my_array_id);
+
+		if(broadcast_cond(monitor,COND_HASCONSUMED) == -1)
+		{
+			fprintf(stderr, "Cannot signal on condition\n");
 			exit(EXIT_FAILURE);
 		}
 
-		printf("Consumed value: %d\n",shm_addr[res]);
+		leave_monitor(monitor);
 
-		/*
-		 * Signal to producer that buffer is empty
-		 */
-		if(signal_sem(id_sem_notfull,res,0) == -1)
-		{
-			fprintf(stderr,"Error while signaling empty buffer\n");
-			exit(EXIT_FAILURE);
-		}
 		printf("Press a key to consume (Ctrl-D to exit)");
 	}
 
