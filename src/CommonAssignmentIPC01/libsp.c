@@ -850,13 +850,6 @@ int broadcast_cond(Monitor *mon, int cond_num)
 		 */
 		for(int i = 0; i < n_queue; i++)
 		{
-			/*
-			 * Define semaphore operation
-			 */
-			struct sembuf op;
-			op.sem_num = cond_num;
-			op.sem_op = 1; // Signal operation, releasing resources
-			op.sem_flg = 0; // WARNING: conversion from int to short
 
 			/*
 			 * Release a resource for each process in queue
