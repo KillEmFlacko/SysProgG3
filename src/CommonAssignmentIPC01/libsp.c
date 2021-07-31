@@ -846,28 +846,35 @@ int broadcast_cond(Monitor *mon, int cond_num)
 		}
 
 		/*
-		 * Define semaphore operation
+		 * wake up each queued process
 		 */
-		struct sembuf op;
-		op.sem_num = cond_num;
-		op.sem_op = n_queue; // Signal operation, releasing resources
-		op.sem_flg = 0; // WARNING: conversion from int to short
-
-		/*
-		 * Release a resource for each process in queue
-		 */
-		if(semop(mon->id_cond,&op,1) == -1) {
-			snprintf(error_string,ERRMSG_MAX_LEN,"signal_cond(mon: %p, cond_num: %d) - Cannot signal condition", mon, cond_num);
-			perror(error_string);
-			return -1;
-		}
-
-		if(wait_sem(mon->id_mutex, I_PREEMPT, 0) == -1)
+		for(int i = 0; i < n_queue; i++)
 		{
-			wait_sem(mon->id_cond,cond_num,0); // If signal is ok and we are in an atomic procedure no problem can occur on cond semaphore
-			snprintf(error_string,ERRMSG_MAX_LEN,"signal_cond(mon: %p, cond_num: %d) - Cannot signal the selected semaphore", mon, cond_num);
-			perror(error_string);
-			return -1;
+			/*
+			 * Define semaphore operation
+			 */
+			struct sembuf op;
+			op.sem_num = cond_num;
+			op.sem_op = 1; // Signal operation, releasing resources
+			op.sem_flg = 0; // WARNING: conversion from int to short
+
+			/*
+			 * Release a resource for each process in queue
+			 */
+			if(signal_sem(mon->id_cond, cond_num, 0) == -1)
+			{
+				snprintf(error_string,ERRMSG_MAX_LEN,"signal_cond(mon: %p, cond_num: %d) - Cannot signal condition", mon, cond_num);
+				perror(error_string);
+				return -1;
+			}
+
+			if(wait_sem(mon->id_mutex, I_PREEMPT, 0) == -1)
+			{
+				wait_sem(mon->id_cond,cond_num,0); // If signal is ok and we are in an atomic procedure no problem can occur on cond semaphore
+				snprintf(error_string,ERRMSG_MAX_LEN,"signal_cond(mon: %p, cond_num: %d) - Cannot signal the selected semaphore", mon, cond_num);
+				perror(error_string);
+				return -1;
+			}
 		}
 	}
 
