@@ -57,7 +57,7 @@
  * @param path path of the file
  * 
  */
-void writer(int sem, char* str, char path)
+void writer(int sem, char* str, char *path)
 {
     char error_string[ERRMSG_MAX_LEN];
 
@@ -106,7 +106,7 @@ void writer(int sem, char* str, char path)
  * @param path path of the file
  * 
  */
-void reader(int sem, int *nr, char path)
+void reader(int sem, int *nr, char *path)
 {
     char error_string[ERRMSG_MAX_LEN];
 

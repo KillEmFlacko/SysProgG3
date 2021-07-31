@@ -39,7 +39,7 @@
 #include <semaphore.h>
 #include <unistd.h>
 #include <string.h>
-#include "libsp.h"
+#include "CommonAssignmentIPC01/libsp.h"
 
 #define NUM_PHILOSOPHERS 10
 #define LEN 30
