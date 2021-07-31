@@ -35,113 +35,101 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
+#include <sys/wait.h>
 #include <semaphore.h>
 #include <unistd.h>
 #include <string.h>
+#include "libsp.h"
 
 #define NUM_PHILOSOPHERS 10
 #define LEN 30
 
-sem_t table;	// Semaphore of the table
-sem_t stick[NUM_PHILOSOPHERS];	// Set of semaphores. One for every row
 int phil_id[NUM_PHILOSOPHERS];	// Numerical id to differentiate philosophers
-
 char text[NUM_PHILOSOPHERS][LEN];	// Resource
 
-void* philosopher(void*);
+void* philosopher(int, void*);
 void eat(int);
-void init_sem(sem_t *, sem_t *, int);
-void start_eating(pthread_t *);
+void init_sem(key_t *, int);
+void start_eating(int);
 void filltext();
 
 /**
  * @brief Main method
  * Each philosopher to perform his action need to obtain two adiacent rows of the
  * resource that in the general problem represents the sticks.
- * Thread related to philosphers are started and after their termination is
+ * Processes related to philosphers are started and after their termination is
  * expected.
  * 
  */
 int main()
 {
-	pthread_t tid[NUM_PHILOSOPHERS];
+	key_t keysem;
+	int sem;
+
+	if ((keysem = ftok(".", 100)) == -1) { perror("ftok"); exit(1); }
 
 	filltext();
 	
-	init_sem(&table, stick, NUM_PHILOSOPHERS);
-		
-	start_eating(tid);
-	
-	for(int i=0; i<NUM_PHILOSOPHERS; i++)
-		pthread_join(tid[i],NULL);
+	sem = get_sem(&keysem, NUM_PHILOSOPHERS + 1, 1);
 
-	printf("\nAll philosophers have eaten");
+	for (int i=1; i < NUM_PHILOSOPHERS; i++) { signal_sem(sem, NUM_PHILOSOPHERS, 0); }
+
+	printf("Number of chairs: %d\n",semctl(sem, NUM_PHILOSOPHERS, GETVAL));
+
+	start_eating(sem);
+	
+	for(int i=0; i<NUM_PHILOSOPHERS; i++) { wait(NULL); }
+
+	remove_sem(sem);
 
 	return 0;
 }
 
 /**
- * @brief Initialize the semaphores
- *
- * @param table semaphore associated with the table
- * @param stick set of semaphores associated with the resources
- * @param num_sticks number of resources at disposal
+ * @brief Creates all the processes associated to the task of each philosopher
  * 
  */
-void init_sem(sem_t *table, sem_t *stick, int num_sticks)
-{
-  for (int i = 0; i < num_sticks; i++) 
-  {
-    	sem_init(&stick[i], 0, 1);
-  }
-
-  sem_init(table, 0, num_sticks - 1);
-}
-
-/**
- * @brief Creates the tread associated to the task of each philosopher
- *
- * @param tid pointer to the threads structure
- * 
- */
-void start_eating(pthread_t *tid)
+void start_eating(int sem)
 {
 	for (int i=0; i<NUM_PHILOSOPHERS; i++)
 	{
 		phil_id[i]=i;
-		pthread_create(&tid[i], NULL, philosopher, (void *)&phil_id[i]);
+		if (fork() == 0)
+		{
+			philosopher(sem, (void *)&phil_id[i]);
+		}
 	}
 }
 
 /**
- * @brief Definition of the operation that each philosopher sholud do
+ * @brief Definition of the operation that each philosopher should do
  *
  * @param num identificative number of the philosopher
  * 
  */
-void* philosopher(void *num)
+void* philosopher(int sem, void *num)
 {
 	int phil= *(int *)num;
 
-	sem_wait(&table);
+	// The last semaphore is associated with the table
+	wait_sem(sem, NUM_PHILOSOPHERS, 0);
 	printf("\nPhilosopher %d has joined table", phil);
 
 	// Dijkstra solution
 	if (phil % 2) 
 	{	
 		// Take first the left stick and then the right
-		sem_wait(&stick[phil]);
+		wait_sem(sem, phil, 0);
 		printf("\nPhilosopher %d take %s", phil, text[phil]);
-		sem_wait(&stick[(phil+1)%NUM_PHILOSOPHERS]);
+		wait_sem(sem, (phil+1)%NUM_PHILOSOPHERS, 0);
 		printf("\nPhilosopher %d take %s", phil, text[(phil+1)%NUM_PHILOSOPHERS]);
 	}
 	else
 	{
 		// Take first the right stick and then the left
-		sem_wait(&stick[(phil+1)%NUM_PHILOSOPHERS]);
+		wait_sem(sem, (phil+1)%NUM_PHILOSOPHERS, 0);
 		printf("\nPhilosopher %d take %s", phil, text[(phil+1)%NUM_PHILOSOPHERS]);
-		sem_wait(&stick[phil]);
+		wait_sem(sem, phil, 0);
 		printf("\nPhilosopher %d take %s", phil, text[phil]);
 	}
 
@@ -149,11 +137,11 @@ void* philosopher(void *num)
 	sleep(3);
 	printf("\nPhilosopher %d has finished eating", phil);
 
-	sem_post(&stick[phil]);
-	sem_post(&stick[(phil+1)%NUM_PHILOSOPHERS]);
-	sem_post(&table);
+	signal_sem(sem, phil, 0);
+	signal_sem(sem, (phil+1)%NUM_PHILOSOPHERS, 0);
+	signal_sem(sem, NUM_PHILOSOPHERS, 0);
 
-	pthread_exit(0);
+	exit(0);
 }
 
 /**
