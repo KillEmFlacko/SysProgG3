@@ -1,9 +1,6 @@
 # Lista degli eseguibili da generare (vedi nelle recipe per la generazione)
 EXECS = dining_philosophers lamport
 
-# Additional linking options
-LFLAGS += -pthread
-
 # Recupero il nome del modulo in analisi
 MODULE_NAME = $(notdir $(shell pwd))
 
@@ -44,7 +41,7 @@ INCLUDE_REL = $(shell realpath --relative-to . $(INCLUDE))
 
 .PHONY: all clean
 
-all: $(OBJS_ABSPATH)
+all: $(EXECS_ABSPATH)
 
 depend:
 	makedepend -I $(INCLUDE_REL) $(SRCS) -Y /usr/include
