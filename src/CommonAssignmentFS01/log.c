@@ -18,7 +18,7 @@ FILE *writel_open()
 {
     
     // open log file or quit.
-    FILE * logfd = fopen("dnfs.log", "w");
+    FILE * logfd = fopen("data/dnfs.log", "w");
     if (logfd == NULL) {
 	perror("writel_open");
 	exit(EXIT_FAILURE);
