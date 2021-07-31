@@ -82,6 +82,12 @@ Array_TypeDef* Array_init(key_t *key,int len, int n_consumers, int *id)
 	 */
 	if(id != NULL)
 	{
+		if(array->cons_id == array->n_consumers)
+		{
+			remove_shm(shm_id);
+			fprintf(stderr,"Array_init(key: %p, len: %d, n_consumers: %d) - Too much consumers\n",key,len,n_consumers);
+			return NULL;
+		}
 		*id = array->cons_id++;
 	}
 

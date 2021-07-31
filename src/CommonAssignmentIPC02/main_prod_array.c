@@ -48,6 +48,7 @@ Array_TypeDef *array = NULL;
 
 void exit_procedure(void)
 {
+	putchar('\n');
 	if(array != NULL)
 	{
 		if(Array_remove(array))
