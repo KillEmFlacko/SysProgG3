@@ -115,10 +115,14 @@ clean:
 
 # DO NOT DELETE
 
+array.o: ../../include/CommonAssignmentIPC01/libsp.h
+array.o: ../../include/CommonAssignmentIPC02/array.h
+main_cons_array.o: ../../include/CommonAssignmentIPC02/array.h
 main_cons_array.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_cons.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_cons_queue.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_cons_queue.o: ../../include/lib/queue.h
+main_prod_array.o: ../../include/CommonAssignmentIPC02/array.h
 main_prod_array.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_prod.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_prod_queue.o: ../../include/CommonAssignmentIPC01/libsp.h
