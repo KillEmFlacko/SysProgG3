@@ -42,17 +42,39 @@
 #include <limits.h>
 #include <string.h>
 
-#define ERRMSG_MAX_LEN 128
+#define ERRMSG_MAX_LEN 2048
 #define MAX_LINE_LEN 128
+#define PATH_MAX_LEN 1024
 #define FILENAME_READ "data/primo_canto_div_comm.txt"
-#define FILENAME_WRITE "line_by_line.txt" // generated near the executable
+#define FILENAME_WRITE "/line_by_line.txt" // will be generated near the executable
 
 int main(int argc, char* argv[]){
     int fd1, fd2;
-	char* file_name1 = FILENAME_READ;
-    char* file_name2 = FILENAME_WRITE;
     char error_string[ERRMSG_MAX_LEN];
-
+	char* file_name1 = FILENAME_READ;
+    char file_name2[PATH_MAX_LEN];
+    // getting the path of the executable where to create the writing file
+    ssize_t size = readlink("/proc/self/exe", file_name2, sizeof(file_name2)-1);
+    if(size == -1)
+    {
+        snprintf(error_string,ERRMSG_MAX_LEN,"readlink(file_name: %s) - Cannot open reading file","/proc/self/exe");
+		perror(error_string);
+        exit(EXIT_FAILURE);
+    }
+    file_name2[size] = '\0';
+    int i = strlen(file_name2);
+    // truncate at first occurence of /
+    while(i >= 0)
+    {
+        if(file_name2[i] == '/')
+        {
+            file_name2[i] = '\0';
+            break;
+        }
+        i--;
+    }
+    strcat(file_name2, FILENAME_WRITE);
+    
 	// Open the reading file
     fd1 = open(file_name1, O_RDONLY);
     // Checking the opening of the reading file
@@ -79,7 +101,7 @@ int main(int argc, char* argv[]){
 
     char letter;
     size_t bytes_read;
-    int i = 0;
+    i = 0;
     char buf[MAX_LINE_LEN];
 
     while(bytes_read = read(fd1, (void*) &letter, 1)) // when 0, EOF is encountered

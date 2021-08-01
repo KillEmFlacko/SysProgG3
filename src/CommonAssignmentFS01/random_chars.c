@@ -40,16 +40,39 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <limits.h>
+#include <string.h>
 
-#define ERRMSG_MAX_LEN 128
+#define ERRMSG_MAX_LEN 2048
 #define MEGABYTE 1000000
-#define FILENAME "random_chars_file.bin"
+#define PATH_MAX_LEN 1024
+#define FILENAME "/random_chars_file.bin" // will be generated near the executable
 
 int main(int argc, char* argv[]){
     int fd;
-	char* file_name = FILENAME;
 	char error_string[ERRMSG_MAX_LEN];
-
+	char file_name[PATH_MAX_LEN];
+    // getting the path of the executable where to create the writing file
+    ssize_t size = readlink("/proc/self/exe", file_name, sizeof(file_name)-1);
+    if(size == -1)
+    {
+        snprintf(error_string,ERRMSG_MAX_LEN,"readlink(file_name: %s) - Cannot open reading file","/proc/self/exe");
+		perror(error_string);
+        exit(EXIT_FAILURE);
+    }
+    file_name[size] = '\0';
+    int i = strlen(file_name);
+    // truncate at first occurence of /
+    while(i >= 0)
+    {
+        if(file_name[i] == '/')
+        {
+            file_name[i] = '\0';
+            break;
+        }
+        i--;
+    }
+    strcat(file_name, FILENAME);
+	
 	// Open the file
     fd = open(file_name, O_WRONLY | O_CREAT | O_TRUNC, 
     	S_IRUSR | S_IWUSR | S_IXUSR |

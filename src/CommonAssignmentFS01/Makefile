@@ -1,5 +1,5 @@
 # Lista degli eseguibili da generare (vedi nelle recipe per la generazione)
-EXECS = dnfs
+EXECS = dnfs random_chars write_char_by_char write_line_by_line fifo_sendmsg fifo_rcvmsg
 
 # Recupero il nome del modulo in analisi
 MODULE_NAME = $(notdir $(shell pwd))
@@ -63,6 +63,26 @@ depend:
 $(BIN_DIR)/dnfs : $(BUILD_DIR)/dnfs.o $(BUILD_DIR)/log.o #$(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^ -lfuse -pthread
+
+$(BIN_DIR)/random_chars : $(BUILD_DIR)/random_chars.o $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $^
+
+$(BIN_DIR)/write_char_by_char : $(BUILD_DIR)/write_canto_char_by_char.o $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $^
+
+$(BIN_DIR)/write_line_by_line : $(BUILD_DIR)/write_canto_line_by_line.o $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $^
+
+$(BIN_DIR)/fifo_sendmsg : $(BUILD_DIR)/S24_fifo_sendmsg.o $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $^
+
+$(BIN_DIR)/fifo_rcvmsg : $(BUILD_DIR)/S25_fifo_rcvmsg.o $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $^
 
 # Gestione delle dipendenze
 #$(DEPS_ABSPATH):
