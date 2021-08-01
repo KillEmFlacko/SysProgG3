@@ -7,9 +7,6 @@ MODULE_NAME = $(notdir $(shell pwd))
 # Additional compile flags
 CFLAGS += -D_FILE_OFFSET_BITS=64
 
-# Additional linking flags
-LFLAGS += -D_FILE_OFFSET_BITS=64
-
 # ------------ CALCOLO DELLE DIPENDENZE ------------
 
 # Prendo gli include in ogni source file
