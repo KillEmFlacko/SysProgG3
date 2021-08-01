@@ -104,7 +104,7 @@ int main(int argc, char* argv[]){
     i = 0;
     char buf[MAX_LINE_LEN];
 
-    while(bytes_read = read(fd1, (void*) &letter, 1)) // when 0, EOF is encountered
+    while((bytes_read = read(fd1, (void*) &letter, 1)) != 0) // when 0, EOF is encountered
     {
         // Checking errors
         if(bytes_read == -1)
