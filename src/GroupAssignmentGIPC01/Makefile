@@ -81,3 +81,6 @@ dining_philosophers.o: ../../include/CommonAssignmentIPC01/libsp.h
 lamport.o: ../../include/GroupAssignmentGIPC01/lamport.h
 lamport.o: ../../include/lib/lib.h
 lamport.o: ../../include/CommonAssignmentIPC01/libsp.h
+main_lamport.o: ../../include/GroupAssignmentGIPC01/lamport.h
+main_lamport.o: ../../include/lib/lib.h
+main_lamport.o: ../../include/CommonAssignmentIPC01/libsp.h
