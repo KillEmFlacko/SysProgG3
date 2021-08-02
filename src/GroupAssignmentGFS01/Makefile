@@ -33,6 +33,8 @@ OBJS = $(patsubst %.c,%.o,$(SRCS))
 BUILD_DIR = $(BUILD)/$(MODULE_NAME)
 BIN_DIR = $(BUILD_DIR)/bin
 
+CFLAGS += -DGFS01_KEY_PATH=\"$(BUILD_DIR)/tmp.key\" -DGFS01_IV_PATH=\"$(BUILD_DIR)/tmp.iv\"
+
 # Path assolute degli oggetti
 OBJS_ABSPATH = $(addprefix $(BUILD_DIR)/,$(OBJS))
 
@@ -62,16 +64,24 @@ depend:
 
 $(BIN_DIR)/httpfs : $(OBJS_ABSPATH) $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
-	$(CC) $(LFLAGS) -o $@ $(filter %.o,$^) -lfuse -lcurl
+	$(CC) $(LFLAGS) -o $@ $(filter %.o,$^) -lfuse -lcurl -lcrypto
 
 # Gestione delle dipendenze
 $(DEPS_ABSPATH):
 	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D)) $@
 
 # Recipe per gli object files
-$(BUILD)/$(MODULE_NAME)/%.o: %.c $(MY_INCLUDES)
+$(BUILD)/$(MODULE_NAME)/%.o: %.c $(MY_INCLUDES) $(BUILD_DIR)/tmp.key $(BUILD_DIR)/tmp.iv
 	-mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -I$(INCLUDE) -c -o $@ $(notdir $(basename $@)).c
+
+$(BUILD_DIR)/tmp.key:
+	-mkdir -p $(dir $@)
+	openssl rand 256 > $@
+
+$(BUILD_DIR)/tmp.iv:
+	-mkdir -p $(dir $@)
+	openssl rand 128 > $@
 
 clean: 
 	rm -f *~ *.bak $(BUILD)/$(MODULE_NAME)/*.o $(EXECS_ABSPATH)

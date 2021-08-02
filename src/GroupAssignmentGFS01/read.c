@@ -1,4 +1,5 @@
 #include "GroupAssignmentGFS01/httpfs.h"
+#include "GroupAssignmentGFS01/crypt.h"
 
 int httpfs_read( const char *path ,
                  char *buf ,
@@ -23,7 +24,18 @@ int httpfs_read( const char *path ,
             HTTPFS_RETURN( EBADMSG );
         }
 
-        memcpy( buf , response.payload , response.size );
+		int block_size = EVP_CIPHER_block_size(_CRYPT_CIPHER);
+		unsigned char plaintext[size + block_size];
+
+		unsigned char key[KEY_LEN];
+		Crypt_loadKey(GFS01_KEY_PATH,key);
+
+		unsigned char iv[IV_LEN];
+		Crypt_loadIV(GFS01_IV_PATH,iv);
+
+		Crypt_decrypt(key,iv,(unsigned char*)response.payload,response.size,offset,plaintext);
+
+		memcpy( buf, plaintext, response.size );
 
         HTTPFS_CLEANUP;
         return response.size;
