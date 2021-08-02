@@ -45,6 +45,7 @@
 
 #define BUFFSIZE 10
 #define BATCH 5
+#define ERRMSG_MAX_LEN 128
 
 /**
  * @brief Updates the value of a variable
@@ -57,6 +58,14 @@
  */
 void writer(int *sem, int *array, int index, int new_val)
 {
+    char error_string[ERRMSG_MAX_LEN];
+    if (index < 0 || index > BUFFSIZE-1)
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"writer(sem: %d, array: %p, index: %d, new_val: %d) - Index out of bound exception", *sem, array, index, new_val);
+		perror(error_string);
+        return;
+	}
+
     printf("\n### STARTING WRITER PROCESS ###\n");
 
     int sem_index = index / BATCH;
@@ -75,7 +84,12 @@ void writer(int *sem, int *array, int index, int new_val)
     sleep(12);
     // ***
     array[index] = new_val;
-    printf("\n%d - %d\n", new_val, array[index]);
+    printf("ARRAY: %d - [ ", sem_index);
+    for (int i=sem_index*BATCH; i<(sem_index+1)*BATCH; i++)
+    {
+        printf("%d ", array[i]);
+    }
+    printf("]\n");
     printf("\n*\n*\n<< EXIT SECTION >>\n");
 
     signal_sem(sem[sem_index], S_WRITE, 0);
@@ -94,6 +108,14 @@ void writer(int *sem, int *array, int index, int new_val)
  */
 void reader(int *sem, int *nr, int *array, int index)
 {
+    char error_string[ERRMSG_MAX_LEN];
+    if (index < 0 || index > BUFFSIZE-1)
+	{
+		snprintf(error_string,ERRMSG_MAX_LEN,"writer(sem: %d, nr: %d, array: %p, index: %d) - Index out of bound exception", *sem, *nr, array, index);
+		perror(error_string);
+        return;
+	}
+
     printf("\n### STARTING READER PROCESS ###\n");
 
     int sem_index = index / BATCH;
@@ -151,8 +173,8 @@ int main(int argc, char **argv)
     /************************************
     *   SHARED MEMORY AREA
     */
-	int array[BUFFSIZE] = {0};
-    int n_readers[n_batch];
+	int *array;
+    int *n_readers;
     /*
     *************************************
     */
@@ -160,8 +182,8 @@ int main(int argc, char **argv)
     fprintf(stdout,"Generating keys...\n");
 
     // Generating key for shared memory
-	if ((key0 = ftok(".", 100)) == -1) { perror("ftok"); exit(1); }
-    if ((key1 = ftok(".", 101)) == -1) { perror("ftok"); exit(1); }
+	key0 = IPC_PRIVATE;
+    key1 = IPC_PRIVATE;
     for (int i=0 ; i<n_batch; i++)
     {
         if ((keysem[i] = ftok(".", 104+i)) == -1) { perror("ftok"); exit(1); }
@@ -171,7 +193,7 @@ int main(int argc, char **argv)
 
     // Attach shared memory to data
     int shm0 = get_shm(&key0, (char**)&array, sizeof(int)*BUFFSIZE, NULL);
-    int shm1 = get_shm(&key1, (char**)&n_readers, sizeof(int), NULL);
+    int shm1 = get_shm(&key1, (char**)&n_readers, sizeof(int)*n_batch, NULL);
 
     // Reset value in case of existing shm
     for(int i=0; i<n_batch; i++) { n_readers[i] = 0; }
@@ -201,7 +223,7 @@ int main(int argc, char **argv)
             while (1) 
             {
                 sleep(1);
-                reader(sem, n_readers, array, 6);
+                reader(sem, n_readers, array, 4);
             }
         }
         else
@@ -209,7 +231,7 @@ int main(int argc, char **argv)
             while (1) 
             {
                 sleep(1);
-                reader(sem, n_readers, array, 6);
+                reader(sem, n_readers, array, 4);
             }
         }
         
