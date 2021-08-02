@@ -29,7 +29,7 @@
  */
 
 /**
-  @file readwrite_file.c
+  @file readwrite_var.c
   @brief Performs the reader/writer problem in the case that the shared resource is a variable
   */
 
