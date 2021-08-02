@@ -1,4 +1,7 @@
 #include "GroupAssignmentGFS01/httpfs.h"
+#include "GroupAssignmentGFS01/crypt.h"
+#include <openssl/cryptoerr.h>
+#include <openssl/evp.h>
 
 int httpfs_write( const char *path ,
                   const char *buf ,
@@ -6,7 +9,18 @@ int httpfs_write( const char *path ,
                   off_t offset ,
                   struct fuse_file_info *fi )
 {
-    struct raw_data raw_data = { ( char * )buf , size };
+	int block_size = EVP_CIPHER_block_size(_CRYPT_CIPHER);
+	char crypt_buf[size+block_size];
+
+	unsigned char key[KEY_LEN];
+	Crypt_loadKey(GFS01_KEY_PATH,key);
+
+	unsigned char iv[IV_LEN];
+	Crypt_loadIV(GFS01_IV_PATH,iv);
+
+	Crypt_encrypt(key,iv,(unsigned char*)buf,size,offset,(unsigned char*)crypt_buf);
+
+	struct raw_data raw_data = { ( char * )crypt_buf, size };
     struct
     {
         uint32_t size;
