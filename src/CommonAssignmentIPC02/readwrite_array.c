@@ -29,8 +29,8 @@
  */
 
 /**
-  @file readwrite_file.c
-  @brief Performs the reader/writer problem in the case that the shared resource is a variable
+  @file readwrite_array.c
+  @brief Performs the reader/writer problem in the case that the shared resource is an array
   */
 
 #include <stdio.h>

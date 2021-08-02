@@ -88,6 +88,8 @@ int main()
 /**
  * @brief Creates all the processes associated to the task of each philosopher
  * 
+ * @param sem set of semaphores
+ * 
  */
 void start_eating(int sem)
 {

@@ -40,6 +40,19 @@
 
 #define ERRMSG_MAX_LEN 128
 
+/**
+  @file crypt.c
+  @brief Library for symmetric message encryption with AES in counter monde
+  */
+
+
+/**
+ * @brief Load the key from disc
+ * 
+ * @param path path of the file on disc where the key is stored
+ * @param key variable in which store the key
+ * 
+ */
 int Crypt_loadKey(const char *path, unsigned char *key)
 {
 	char error_string[ERRMSG_MAX_LEN];
@@ -62,6 +75,13 @@ int Crypt_loadKey(const char *path, unsigned char *key)
 	return 0;
 }
 
+/**
+ * @brief Load the initialization vector from disc
+ * 
+ * @param path path of the file on disc where the initialization vector is stored
+ * @param iv variable in which store the initialization vector
+ * 
+ */
 int Crypt_loadIV(const char *path, unsigned char *iv)
 {
 	char error_string[ERRMSG_MAX_LEN];
@@ -84,6 +104,17 @@ int Crypt_loadIV(const char *path, unsigned char *iv)
 	return 0;
 }
 
+/**
+ * @brief Encrypt the plaintext in the corresponding ciphertext
+ * 
+ * @param key key for the AES encryption in CTR mode
+ * @param iv initialization vector for the AES encryption in CTR mode
+ * @param plaintext parameter containing the entire plaintext
+ * @param plaintext_len lenght of the plaintext in byte
+ * @param offset distance in byte from the start of the block
+ * @param ciphertext parameter containing the ciphertext
+ * 
+ */
 int Crypt_encrypt(unsigned char *key, unsigned char *iv,
 				  unsigned char *plaintext, size_t plaintext_len, off_t offset,
 				  unsigned char *ciphertext)
@@ -192,6 +223,17 @@ int Crypt_encrypt(unsigned char *key, unsigned char *iv,
 	return ciphertext_len;
 }
 
+/**
+ * @brief Decrypt the ciphertext in the corresponding plaintext
+ * 
+ * @param key key for the AES encryption in CTR mode
+ * @param iv initialization vector for the AES encryption in CTR mode
+ * @param plaintext parameter containing the entire plaintext
+ * @param plaintext_len lenght of the plaintext in byte
+ * @param offset distance in byte from the start of the block
+ * @param ciphertext parameter containing the ciphertext
+ * 
+ */
 int Crypt_decrypt(unsigned char *key, unsigned char *iv,
 				  unsigned char *ciphertext, size_t ciphertext_len, off_t offset,
 				  unsigned char *plaintext)
