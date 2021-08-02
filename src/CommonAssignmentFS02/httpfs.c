@@ -1,15 +1,16 @@
 #include "CommonAssignmentFS02/httpfs.h"
 #include "CommonAssignmentFS02/fuse_api/fuse_api.h"
 
+
 //  All the paths are relative to the root of the mounted
 //  filesystem.  paths have to be completed by mountpoint
-void dnfs_fullpath(char fpath[PATH_MAX], const char *path)
+void hpfs_fullpath(char fpath[PATH_MAX], const char *path)
 {
-    strcpy(fpath, DNFS_DATA->rootdir);
+    strcpy(fpath, DNFS_DATA->mount_point);
     strncat(fpath, path, PATH_MAX); // truncates long paths
 
-    writel_msg("    dnfs_fullpath:  rootdir = \"%s\", path = \"%s\", fpath = \"%s\"\n",
-	    DNFS_DATA->rootdir, path, fpath);
+    writel_msg("    httpfs_fullpath:  rootdir = \"%s\", path = \"%s\", fpath = \"%s\"\n",
+	    DNFS_DATA->mount_point, path, fpath);
 }
 
 const char *HTTPFS_OPCODE_NAMES[] = {
@@ -53,6 +54,9 @@ int httpfs_fuse_start( struct httpfs *httpfs ,
 
     httpfs->url = url;
     httpfs->remote_chroot = remote_chroot;
+    httpfs->mount_point = mount_point;
+    httpfs->logfile = writel_open(); // log file creation
+
 
     /* initialize curl */
     httpfs->curl = curl_easy_init();

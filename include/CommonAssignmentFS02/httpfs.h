@@ -42,13 +42,14 @@
 #include <arpa/inet.h>
 #include "debug.h"
 #include "net.h"
-
-#include <unistd.h>
 #include <fcntl.h>
-#include "CommonAssignmentFS01/log.h"
-#include "CommonAssignmentFS01/p.h"
+#include <sys/stat.h>
+#include "log.h"
+#include "p.h"
+#include <unistd.h>
 
-void dnfs_fullpath(char fpath[PATH_MAX], const char *path);
+
+void hpfs_fullpath(char fpath[PATH_MAX], const char *path);
 
 /* convenience macros used to implement the FUSE API functions; 'response' is
    the data received and it's available to the implementation; a structure named
@@ -145,6 +146,8 @@ struct httpfs
     const char *url;
     const char *remote_chroot;
     CURL *curl;
+    FILE *logfile;
+    const char *mount_point;
 };
 
 /* operation codes */

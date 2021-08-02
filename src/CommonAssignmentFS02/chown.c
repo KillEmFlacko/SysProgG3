@@ -1,5 +1,6 @@
 #include "CommonAssignmentFS02/httpfs.h"
 
+
 int httpfs_chown( const char *path ,
                   uid_t uid ,
                   gid_t gid )
@@ -7,7 +8,7 @@ int httpfs_chown( const char *path ,
 
     char fpath[PATH_MAX];
     writel_msg("\nhttpfs_chown(path=\"%s\", uid=%d, gid=%d)\n", path, uid, gid);
-    dnfs_fullpath(fpath, path);
+    hpfs_fullpath(fpath, path);
     writel_syscall("chown", chown(fpath, uid, gid), 0);
 
     struct
