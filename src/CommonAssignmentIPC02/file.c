@@ -40,6 +40,14 @@
 #define NCOND 1
 #define COND_NEWDATA 0
 
+/**
+ * @brief Allocate and initialize the file structure
+ *
+ * @param key_mon System V key for the monitor structure
+ * @param key_shm System V key for the shared memory area
+ * @param file_path path to the file
+ * @retval pointer to the File structure
+ */
 IPC02_File_TypeDef* IPC02_File_init(key_t *key_mon, key_t *key_shm, const char* file_path)
 {
 	char error_string[ERRMSG_MAX_LEN];

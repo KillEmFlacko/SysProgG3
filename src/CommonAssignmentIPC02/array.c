@@ -28,6 +28,12 @@
  * along with SysProgG3.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file array.c
+ * @brief Array library for Producer and Consumer problem.
+ * Use with monitor!
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "CommonAssignmentIPC01/libsp.h"
@@ -35,6 +41,15 @@
 
 #define ERRMSG_MAX_LEN 128
 
+/**
+ * @brief Create and initialize the array structure
+ *
+ * @param key pointer to the key used for creating the shared memory area
+ * @param len length of the array
+ * @param n_consumers number of consumers that will use the array
+ * @param id pointer to the memory area where to store consumer id (set to NULL for producer)
+ * @retval pointer to the shared Array structure
+ */
 Array_TypeDef* Array_init(key_t *key,int len, int n_consumers, int *id)
 {
 	char error_string[ERRMSG_MAX_LEN];
@@ -99,16 +114,37 @@ Array_TypeDef* Array_init(key_t *key,int len, int n_consumers, int *id)
 	return array;
 }
 
+/**
+ * @brief Set an array location as dirty (ready to be consumed) for a consumer
+ *
+ * @param array array to set the dirty bit to
+ * @param index index of the newly produced element
+ * @param id consumer id to which the value is new
+ */
 void Array_setDirty(Array_TypeDef* array, int index, int id)
 {
 	array->bitmap[id][index] = 1;
 }
 
+/**
+ * @brief Set an array location as not dirty (already consumed) for a consumer
+ *
+ * @param array array to unset the dirty bit to
+ * @param index index of the consumed element
+ * @param id consumer id
+ */
 void Array_unsetDirty(Array_TypeDef* array, int index, int id)
 {
 	array->bitmap[id][index] = 0;
 }
 
+/**
+ * @brief Check if a location is dirty for at least one consumer
+ *
+ * @param array array to check the bit
+ * @param index index of the element
+ * @retval 1 if dirty, 0 otherwise
+ */
 int Array_isDirty(Array_TypeDef *array, int index)
 {
 	for(int i = 0; i < array->n_consumers; i++)
@@ -118,9 +154,16 @@ int Array_isDirty(Array_TypeDef *array, int index)
 	return 0;
 }
 
+/**
+ * @brief Remove the array and all the structures attached to it
+ *
+ * @param array the array to remove
+ * @retval 0 if no other process is using the array 
+ */
 int Array_remove(Array_TypeDef* array)
 {
-	remove_shm(array->shm_id);
 	array->counter--;
-	return array->counter == 0;
+	int cnt = array->counter;
+	remove_shm(array->shm_id);
+	return cnt == 0;
 }

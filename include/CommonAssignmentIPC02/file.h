@@ -31,16 +31,20 @@
 #ifndef _IPC02_FILE_H
 #define _IPC02_FILE_H
 
-#include "CommonAssignmentIPC01/libsp.h"
+#include <fcntl.h>
 #include <sys/types.h>
+#include "CommonAssignmentIPC01/libsp.h"
 
+/**
+ * @brief File struct for producer and consumer
+ */
 struct IPC02_File_Struct
 {
-	Monitor* mon;
-	int fd;
-	int shm_id;
-	unsigned int *counter;
-	off_t *prod_offset;
+	Monitor* mon; /**< monitor for mutual exclusion */
+	int fd; /**< file descriptor for the file */
+	int shm_id; /**< ID to the shared memory area */
+	unsigned int *counter; /**< counter of the usign processes */
+	off_t *prod_offset; /**< offset of production */
 };
 
 typedef struct IPC02_File_Struct IPC02_File_TypeDef;
