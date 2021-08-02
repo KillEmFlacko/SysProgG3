@@ -1,16 +1,29 @@
 # Lista degli eseguibili da generare (vedi nelle recipe per la generazione)
-EXECS = hpfs
+EXECS = httpfs
 
 # Recupero il nome del modulo in analisi
 MODULE_NAME = $(notdir $(shell pwd))
 
-# ------------ CALCOLO DELLE DIPENDENZE ------------
+# Compilation flags
+CFLAGS += -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=29
 
-# Include files
+# ------------ CALCOLO DELLE DIPENDENZE ------------
 
 # Prendo gli include in ogni source file
 SRCS=$(shell find *.c 2>/dev/null)
-MY_INCLUDES = $(wildcard $(INCLUDE)/$(MODULE_NAME)/*.h)
+MY_INCLUDES = \
+	$(foreach src, $(SRCS), \
+		$(filter $(INCLUDE)%,$(shell $(CC) $(CFLAGS) -I $(INCLUDE) -M $(src)))\
+	 )
+
+# Trasformo gli include in moduli di dipendenza 
+DEPS = $(sort $(filter-out /$(MODULE_NAME)/%, $(dir $(patsubst $(INCLUDE)%,%,$(MY_INCLUDES)))))
+
+# Genero le path assolute dei relativi file oggetto
+DEPS_ABSPATH = \
+	$(foreach dep,$(DEPS), \
+		$(patsubst $(SRC)%.c,$(BUILD)%.o,$(shell find $(SRC)$(dep)*.c)) \
+	 )
 
 # ------------ GENERAZIONE PATH ASSOLUTE ------------
 
@@ -19,6 +32,9 @@ OBJS = $(patsubst %.c,%.o,$(SRCS))
 
 BUILD_DIR = $(BUILD)/$(MODULE_NAME)
 BIN_DIR = $(BUILD_DIR)/bin
+
+# Path assolute degli oggetti
+OBJS_ABSPATH = $(addprefix $(BUILD_DIR)/,$(OBJS))
 
 # Genero le path assolute degli object file e dell'eseguibile
 EXECS_ABSPATH = $(addprefix $(BIN_DIR)/,$(EXECS))
@@ -30,31 +46,13 @@ INCLUDE_REL = $(shell realpath --relative-to . $(INCLUDE))
 
 .PHONY: all clean
 
-# Depends on bin/include bin/*.c and bin/Makefile
-all: $(addprefix $(BUILD_DIR)/,$(MODULE_NAME)) $(addprefix $(BUILD_DIR)/,$(SRCS)) $(BUILD_DIR)/Makefile
-	make -C /lib/modules/$(shell uname -r)/build M=$(BUILD_DIR) modules
+all: $(EXECS_ABSPATH)
 
-# Create a symlink from src to bin
-$(BUILD_DIR)/%.c: $(SRC)/$(MODULE_NAME)/%.c
-	-mkdir -p $(dir $@)
-	ln -s $< $@
-
-# Create a symlink from src to bin
-$(BUILD_DIR)/$(MODULE_NAME): $(INCLUDE)/$(MODULE_NAME)
-	-mkdir -p $(dir $@)
-	ln -s $< $@
-
-# Generate a Makefile with the needed obj-m and mymodule-objs set
-$(BUILD_DIR)/Makefile:
-	-mkdir -p $(dir $@)
-	# TODO: command line argument fix
-	printf "obj-m += $(EXECS).o\n$(EXECS)-objs := $(subst $(EXECS).o,, $(subst .c,.o,$(subst $(SRC)/,,$(SRCS))))\n" > $@
-
-#depend:
-#	makedepend -I $(INCLUDE_REL) $(SRCS) -Y /usr/include
-#	for dir in $(SUBDIRS); do \
-#		$(MAKE) -C $$dir $@; \
-#	done
+depend:
+	makedepend -I $(INCLUDE_REL) $(SRCS) -Y /usr/include
+	for dir in $(SUBDIRS); do \
+		$(MAKE) -C $$dir $@; \
+	done
 
 # Template recipe per gli eseguibili
 #
@@ -62,18 +60,133 @@ $(BUILD_DIR)/Makefile:
 #	-mkdir -p $(dir $@)
 #	$(CC) $(LFLAGS) -o $@ $^
 
+$(BIN_DIR)/httpfs : $(OBJS_ABSPATH) $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $(filter %.o,$^) -lfuse -lcurl
+
 # Gestione delle dipendenze
-#$(DEPS_ABSPATH):
-#	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D)) $@
+$(DEPS_ABSPATH):
+	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D)) $@
 
 # Recipe per gli object files
-#$(BUILD)/$(MODULE_NAME)/%.o: %.c $(MY_INCLUDES)
-#	-mkdir -p $(dir $@)
-#	$(CC) $(CFLAGS) -I$(INCLUDE) -c -o $@ $(notdir $(basename $@)).c
+$(BUILD)/$(MODULE_NAME)/%.o: %.c $(MY_INCLUDES)
+	-mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -I$(INCLUDE) -c -o $@ $(notdir $(basename $@)).c
 
 clean: 
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
 	rm -f *~ *.bak $(BUILD)/$(MODULE_NAME)/*.o $(EXECS_ABSPATH)
 
 # DO NOT DELETE
 
+chmod.o: ../../include/CommonAssignmentFS02/httpfs.h
+chmod.o: ../../include/CommonAssignmentFS02/debug.h
+chmod.o: ../../include/CommonAssignmentFS02/net.h
+chmod.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+chmod.o: ../../include/CommonAssignmentFS02/statuses.def
+chown.o: ../../include/CommonAssignmentFS02/httpfs.h
+chown.o: ../../include/CommonAssignmentFS02/debug.h
+chown.o: ../../include/CommonAssignmentFS02/net.h
+chown.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+chown.o: ../../include/CommonAssignmentFS02/statuses.def
+create.o: ../../include/CommonAssignmentFS02/httpfs.h
+create.o: ../../include/CommonAssignmentFS02/debug.h
+create.o: ../../include/CommonAssignmentFS02/net.h
+create.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+create.o: ../../include/CommonAssignmentFS02/statuses.def
+debug.o: ../../include/CommonAssignmentFS02/net.h
+generators.o: ../../include/CommonAssignmentFS02/httpfs.h
+generators.o: ../../include/CommonAssignmentFS02/debug.h
+generators.o: ../../include/CommonAssignmentFS02/net.h
+generators.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+generators.o: ../../include/CommonAssignmentFS02/statuses.def
+generators.o: ../../include/CommonAssignmentFS02/generators.h
+generators.o: ../../include/CommonAssignmentFS02/generators.def
+generators.o: ../../include/CommonAssignmentFS02/generators.def
+generators.o: ../../include/CommonAssignmentFS02/template.php.h
+getattr.o: ../../include/CommonAssignmentFS02/httpfs.h
+getattr.o: ../../include/CommonAssignmentFS02/debug.h
+getattr.o: ../../include/CommonAssignmentFS02/net.h
+getattr.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+getattr.o: ../../include/CommonAssignmentFS02/statuses.def
+httpfs.o: ../../include/CommonAssignmentFS02/httpfs.h
+httpfs.o: ../../include/CommonAssignmentFS02/debug.h
+httpfs.o: ../../include/CommonAssignmentFS02/net.h
+httpfs.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+httpfs.o: ../../include/CommonAssignmentFS02/statuses.def
+httpfs.o: ../../include/CommonAssignmentFS02/fuse_api/fuse_api.h
+httpfs.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+httpfs.o: ../../include/CommonAssignmentFS02/statuses.def
+link.o: ../../include/CommonAssignmentFS02/httpfs.h
+link.o: ../../include/CommonAssignmentFS02/debug.h
+link.o: ../../include/CommonAssignmentFS02/net.h
+link.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+link.o: ../../include/CommonAssignmentFS02/statuses.def
+main.o: ../../include/CommonAssignmentFS02/generators.h
+main.o: ../../include/CommonAssignmentFS02/generators.def
+main.o: ../../include/CommonAssignmentFS02/httpfs.h
+main.o: ../../include/CommonAssignmentFS02/debug.h
+main.o: ../../include/CommonAssignmentFS02/net.h
+main.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+main.o: ../../include/CommonAssignmentFS02/statuses.def
+main.o: ../../include/CommonAssignmentFS02/fuse_api/fuse_api.h
+main.o: ../../include/CommonAssignmentFS02/version.h
+mkdir.o: ../../include/CommonAssignmentFS02/httpfs.h
+mkdir.o: ../../include/CommonAssignmentFS02/debug.h
+mkdir.o: ../../include/CommonAssignmentFS02/net.h
+mkdir.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+mkdir.o: ../../include/CommonAssignmentFS02/statuses.def
+net.o: ../../include/CommonAssignmentFS02/httpfs.h
+net.o: ../../include/CommonAssignmentFS02/debug.h
+net.o: ../../include/CommonAssignmentFS02/net.h
+net.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+net.o: ../../include/CommonAssignmentFS02/statuses.def
+open.o: ../../include/CommonAssignmentFS02/httpfs.h
+open.o: ../../include/CommonAssignmentFS02/debug.h
+open.o: ../../include/CommonAssignmentFS02/net.h
+open.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+open.o: ../../include/CommonAssignmentFS02/statuses.def
+read.o: ../../include/CommonAssignmentFS02/httpfs.h
+read.o: ../../include/CommonAssignmentFS02/debug.h
+read.o: ../../include/CommonAssignmentFS02/net.h
+read.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+read.o: ../../include/CommonAssignmentFS02/statuses.def
+readdir.o: ../../include/CommonAssignmentFS02/httpfs.h
+readdir.o: ../../include/CommonAssignmentFS02/debug.h
+readdir.o: ../../include/CommonAssignmentFS02/net.h
+readdir.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+readdir.o: ../../include/CommonAssignmentFS02/statuses.def
+readlink.o: ../../include/CommonAssignmentFS02/httpfs.h
+readlink.o: ../../include/CommonAssignmentFS02/debug.h
+readlink.o: ../../include/CommonAssignmentFS02/net.h
+readlink.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+readlink.o: ../../include/CommonAssignmentFS02/statuses.def
+rename.o: ../../include/CommonAssignmentFS02/httpfs.h
+rename.o: ../../include/CommonAssignmentFS02/debug.h
+rename.o: ../../include/CommonAssignmentFS02/net.h
+rename.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+rename.o: ../../include/CommonAssignmentFS02/statuses.def
+rmdir.o: ../../include/CommonAssignmentFS02/httpfs.h
+rmdir.o: ../../include/CommonAssignmentFS02/debug.h
+rmdir.o: ../../include/CommonAssignmentFS02/net.h
+rmdir.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+rmdir.o: ../../include/CommonAssignmentFS02/statuses.def
+symlink.o: ../../include/CommonAssignmentFS02/httpfs.h
+symlink.o: ../../include/CommonAssignmentFS02/debug.h
+symlink.o: ../../include/CommonAssignmentFS02/net.h
+symlink.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+symlink.o: ../../include/CommonAssignmentFS02/statuses.def
+truncate.o: ../../include/CommonAssignmentFS02/httpfs.h
+truncate.o: ../../include/CommonAssignmentFS02/debug.h
+truncate.o: ../../include/CommonAssignmentFS02/net.h
+truncate.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+truncate.o: ../../include/CommonAssignmentFS02/statuses.def
+unlink.o: ../../include/CommonAssignmentFS02/httpfs.h
+unlink.o: ../../include/CommonAssignmentFS02/debug.h
+unlink.o: ../../include/CommonAssignmentFS02/net.h
+unlink.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+unlink.o: ../../include/CommonAssignmentFS02/statuses.def
+write.o: ../../include/CommonAssignmentFS02/httpfs.h
+write.o: ../../include/CommonAssignmentFS02/debug.h
+write.o: ../../include/CommonAssignmentFS02/net.h
+write.o: ../../include/CommonAssignmentFS02/fuse_functions.def
+write.o: ../../include/CommonAssignmentFS02/statuses.def

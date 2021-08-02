@@ -1,0 +1,18 @@
+_( getattr )
+_( readdir )
+_( open )
+_( read )
+_( write )
+_( truncate )
+_( create )
+_( unlink )
+_( mkdir )
+_( rmdir )
+_( rename )
+_( link )
+_( readlink )
+_( symlink )
+_( chmod )
+_( chown )
+/*...*/
+#undef _
