@@ -43,6 +43,13 @@
 #include "debug.h"
 #include "net.h"
 
+#include <unistd.h>
+#include <fcntl.h>
+#include "CommonAssignmentFS01/log.h"
+#include "CommonAssignmentFS01/p.h"
+
+void dnfs_fullpath(char fpath[PATH_MAX], const char *path);
+
 /* convenience macros used to implement the FUSE API functions; 'response' is
    the data received and it's available to the implementation; a structure named
    'header' may be filled with values to be passed to the PHP script before

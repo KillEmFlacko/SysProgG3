@@ -192,8 +192,8 @@ int main(int argc, char **argv)
     fprintf(stdout,"Initializing shm...\n");
 
     // Attach shared memory to data
-    int shm0 = get_shm(&key0, (char**)&array, sizeof(int)*BUFFSIZE, NULL);
-    int shm1 = get_shm(&key1, (char**)&n_readers, sizeof(int)*n_batch, NULL);
+    get_shm(&key0, (char**)&array, sizeof(int)*BUFFSIZE, NULL);
+    get_shm(&key1, (char**)&n_readers, sizeof(int)*n_batch, NULL);
 
     // Reset value in case of existing shm
     for(int i=0; i<n_batch; i++) { n_readers[i] = 0; }
