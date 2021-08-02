@@ -103,6 +103,7 @@ create.o: ../../include/GroupAssignmentGFS01/debug.h
 create.o: ../../include/GroupAssignmentGFS01/net.h
 create.o: ../../include/GroupAssignmentGFS01/fuse_functions.def
 create.o: ../../include/GroupAssignmentGFS01/statuses.def
+crypt.o: ../../include/GroupAssignmentGFS01/crypt.h
 debug.o: ../../include/GroupAssignmentGFS01/net.h
 generators.o: ../../include/GroupAssignmentGFS01/httpfs.h
 generators.o: ../../include/GroupAssignmentGFS01/debug.h
@@ -160,6 +161,7 @@ read.o: ../../include/GroupAssignmentGFS01/debug.h
 read.o: ../../include/GroupAssignmentGFS01/net.h
 read.o: ../../include/GroupAssignmentGFS01/fuse_functions.def
 read.o: ../../include/GroupAssignmentGFS01/statuses.def
+read.o: ../../include/GroupAssignmentGFS01/crypt.h
 readdir.o: ../../include/GroupAssignmentGFS01/httpfs.h
 readdir.o: ../../include/GroupAssignmentGFS01/debug.h
 readdir.o: ../../include/GroupAssignmentGFS01/net.h
@@ -200,3 +202,4 @@ write.o: ../../include/GroupAssignmentGFS01/debug.h
 write.o: ../../include/GroupAssignmentGFS01/net.h
 write.o: ../../include/GroupAssignmentGFS01/fuse_functions.def
 write.o: ../../include/GroupAssignmentGFS01/statuses.def
+write.o: ../../include/GroupAssignmentGFS01/crypt.h

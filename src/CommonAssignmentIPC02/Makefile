@@ -117,6 +117,8 @@ clean:
 
 array.o: ../../include/CommonAssignmentIPC01/libsp.h
 array.o: ../../include/CommonAssignmentIPC02/array.h
+file.o: ../../include/CommonAssignmentIPC02/file.h
+file.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_cons_array.o: ../../include/CommonAssignmentIPC02/array.h
 main_cons_array.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_cons.o: ../../include/CommonAssignmentIPC01/libsp.h
@@ -127,6 +129,7 @@ main_prod_array.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_prod.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_prod_queue.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_prod_queue.o: ../../include/lib/queue.h
+readwrite_array.o: ../../include/CommonAssignmentIPC01/libsp.h
 readwrite_file.o: ../../include/CommonAssignmentIPC01/libsp.h
 readwrite_file.o: ../../include/lib/lib.h
 readwrite_queue.o: ../../include/CommonAssignmentIPC01/libsp.h
