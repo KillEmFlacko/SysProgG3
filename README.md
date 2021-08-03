@@ -27,7 +27,7 @@ Repository contenente tutti gli assignment del gruppo 3 per il corso di System P
 
 - To build the project run `make`
 - To generate the documentation run `make doc`
-- Run the right executables from build/CommonAssignmentIPC02/bin directory.
+- Run the right executables from `build/CommonAssignmentIPC02/bin` directory.
     - Reader-Writer problems have a single executable for each problem (fork) while Producer-Consumer problems have 2 executables, one for the producer and one for the consumer
 
 ## Common Assignment FS01
