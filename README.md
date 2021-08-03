@@ -35,26 +35,25 @@ Repository contenente tutti gli assignment del gruppo 3 per il corso di System P
 ### How to run
 This assignment has different source codes, we don’t provide a single executable to do all, so the following steps are required to test the calls reported above:
 - make to build all
-- from the root of the project run ./build/CommonAssignmentFS01/bin/dnfs build/CommonAssignmentFS01/fs/rootDir build/CommonAssignmentFS01/fs/mountPoint to create the necessary directories, to move executables into the root dir of the file system to mount, to mount the FUSE file system and to generate the dnfs.log file where we can read the calls
-- open the log file into data/dnfs.log
-- run always from the root of the project the executables into the mountPoint directory (./build/CommonAssignmentFS01/fs/mountPoint/random_chars or write_char_by_char or write_line_by_line or fifo_sendmsg or fifo_rcvmsg) or run commands from the shell into the mountPoint directory and see the calls into the log file. 
-Before running the 2 executables for FIFO, make sure you are into the mount point so $cd build/CommonAssignmentFS01/fs/mountPoint and create the fifo file through $mknod fifo p, after you can run sender and receiver processes through $./fifo_rcvmsg and $./fifo_sendmsg message
-- $fusermount -u build/CommonAssignmentFS01/fs/mountPoint to unmount the file system blocking the writing on the log file
+- from the root of the project run `$ ./build/CommonAssignmentFS01/bin/dnfs build/CommonAssignmentFS01/fs/rootDir build/CommonAssignmentFS01/fs/mountPoint` to create the necessary directories, to move executables into the root dir of the file system to mount, to mount the FUSE file system and to generate the `dnfs.log` file where we can read the calls
+- open the log file into `data/dnfs.log`
+- run always from the root of the project the executables into the mountPoint directory (`./build/CommonAssignmentFS01/fs/mountPoint/random_chars` or `write_char_by_char` or `write_line_by_line` or `fifo_sendmsg` or `fifo_rcvmsg`) or run commands from the shell into the mountPoint directory and see the calls into the log file. 
+Before running the 2 executables for FIFO, make sure you are into the mount point so `$ cd build/CommonAssignmentFS01/fs/mountPoint` and create the fifo file through `$ mknod fifo p`, after you can run sender and receiver processes through `$ ./fifo_rcvmsg` and `$ ./fifo_sendmsg message`
+- `$ fusermount -u build/CommonAssignmentFS01/fs/mountPoint` to unmount the file system blocking the writing on the log file
 
 ### How to gerate the documentation
-- $make doc 
-to generate the html documentation with doxygen. In this assignment there aren't personal libraries, so the doc will only have the main functions into /src
+- `$ make doc` to generate the html documentation with doxygen. In this assignment there aren't personal libraries, so the doc will only have the main functions into `src/`
 
 ## Common Assignment FS02
 
 ### How to run
-- To build the project run make
-- Change directory to build/CommonAssignmentFS02/ and create three directories: www/ mnt/ files/
-- Generate httpfs.php with ./bin/httpfs generate php > www/httpfs.php and remove or comment the line  if ( VERBOSE ) set_error_handler( 'store_error' ); (line 31) in httpfs.php
-- Start the server with php -S localhost:8000 -t www/
-- Open another terminal in build/CommonAssignmentFS02/ and mount the filesystem with ./bin/httpfs mount http://localhost:8000/httpfs.php mnt/ ../files
-- run shell commands into the mnt dir
-- open the log file dnfs.log available in build/CommonAssignmentFS02/ and see the log report
+- To build the project run `make`
+- Change directory to `build/GroupAssignmentGFS01/` and create three directories: `www/` `mnt/` `files/`
+- Generate httpfs.php with `./bin/httpfs generate php > www/httpfs.php` and remove or comment the line  `if ( VERBOSE ) set_error_handler( 'store_error' );` (line 31) in `httpfs.php`
+- Start the server with `php -S localhost:8000 -t www/`
+- Open another terminal in `buil/CommonAssignmentFS02/` and mount the filesystem with `./bin/httpfs mount http://localhost:8000/httpfs.php mnt/ ../files`
+- run shell commands into `mnt/` dir
+- open the log file dnfs.log available in `build/CommonAssignmentFS02/` and see the log report
 
 ### How to gerate the documentation
 - $make doc
