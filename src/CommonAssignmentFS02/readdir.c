@@ -20,6 +20,8 @@ int httpfs_readdir( const char *path ,
         }
 
         HTTPFS_CLEANUP;
+        writel_msg("\nhttpfs_readdir(path=\"%s\", buf=0x%08x, filler=0x%08x, offset=%lld, fi=0x%08x)\n",
+	        path, buf, filler, offset, fi);
         HTTPFS_RETURN( 0 );
     }
 }

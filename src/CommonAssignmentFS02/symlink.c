@@ -22,6 +22,7 @@ int httpfs_symlink( const char *path ,
     {
         HTTPFS_CHECK_RESPONSE_STATUS;
         HTTPFS_CLEANUP;
+        writel_msg("\nhttpfs_symlink(path=\"%s\", newpath=\"%s\")\n", path, newpath);
         HTTPFS_RETURN( 0 );
     }
 }
