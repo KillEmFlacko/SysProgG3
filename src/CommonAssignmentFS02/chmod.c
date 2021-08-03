@@ -1,6 +1,5 @@
 #include "CommonAssignmentFS02/httpfs.h"
 
-
 int httpfs_chmod( const char *path ,
                   mode_t mode )
 {
@@ -17,7 +16,6 @@ int httpfs_chmod( const char *path ,
         HTTPFS_CLEANUP;
         writel_msg("\nhttpfs_chmod(fpath=\"%s\", mode=0%03o)\n", path, mode);
         HTTPFS_RETURN( 0 );
-        
     } 
 
 }

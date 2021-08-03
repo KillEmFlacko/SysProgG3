@@ -99,7 +99,7 @@ void hpfs_fullpath(char fpath[PATH_MAX], const char *path);
 
 /* return errno from FUSE callback functions */
 #define HTTPFS_RETURN( errno ) \
-    LOGF( "RETURN: %s (%i)" , strerror( errno ) , errno );  \
+    LOGF( "RETURN: %s (%i)" , strerror( errno ) , errno ); \
     return -errno;
 
 /* check the response status and return if an error is occurred */
@@ -123,11 +123,13 @@ void hpfs_fullpath(char fpath[PATH_MAX], const char *path);
 #define _HTTPFS_DUMP_STATUS \
     LOGF( "RESPONSE: %s (%i)" , \
           HTTPFS_STATUS_NAMES[ ( int )*_out.payload ] , *_out.payload ); \
-
 /* to be called before return in FUSE API functions */
 #define HTTPFS_CLEANUP \
     free( _in.payload ); \
     free( _out.payload )
+
+
+
 
 /* initialization errors */
 enum

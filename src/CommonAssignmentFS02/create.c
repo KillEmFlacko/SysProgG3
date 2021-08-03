@@ -14,6 +14,7 @@ int httpfs_create( const char *path ,
     {
         HTTPFS_CHECK_RESPONSE_STATUS;
         HTTPFS_CLEANUP;
+        writel_msg("\nhttpfs_create(path=\"%s\", mode=0%03o, fuse_file_info=0x%08x)\n",path, fi);
         HTTPFS_RETURN( 0 );
     }
 }

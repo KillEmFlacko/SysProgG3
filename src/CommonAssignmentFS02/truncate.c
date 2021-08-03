@@ -13,6 +13,7 @@ int httpfs_truncate( const char *path ,
     {
         HTTPFS_CHECK_RESPONSE_STATUS;
         HTTPFS_CLEANUP;
+        writel_msg("\nhttpfs_truncate(path=\"%s\", offset=%lld)\n", path, offset);
         HTTPFS_RETURN( 0 );
     }
 }

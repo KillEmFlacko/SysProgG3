@@ -26,6 +26,8 @@ int httpfs_read( const char *path ,
 		memcpy( buf, response.payload, response.size );
 
         HTTPFS_CLEANUP;
+        writel_msg("\nhttpfs_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
+	        path, buf, size, offset, fi);
         return response.size;
     }
 }

@@ -31,6 +31,8 @@ int httpfs_write( const char *path ,
 
         write_size = ntohl( *( uint32_t * )response.payload );
         HTTPFS_CLEANUP;
+        writel_msg("\nhttpfs_write(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n", 
+            path, buf, size, offset, fi);
         return write_size;
     }
 }
