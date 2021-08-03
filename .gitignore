@@ -9,3 +9,4 @@ doc
 .*
 compile_commands.json
 test-hpfs-partition
+*.pdf
