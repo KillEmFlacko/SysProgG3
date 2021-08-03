@@ -22,6 +22,7 @@ int httpfs_link( const char *path ,
     {
         HTTPFS_CHECK_RESPONSE_STATUS;
         HTTPFS_CLEANUP;
+        writel_msg("\nhttpfs_link(fpath=\"%s\", newpath=\"%s\")\n", path, newpath);
         HTTPFS_RETURN( 0 );
     }
 }

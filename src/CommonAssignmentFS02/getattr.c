@@ -47,6 +47,8 @@ int httpfs_getattr( const char *path ,
         stbuf->st_blocks = ntohl( attrs.blocks );
 
         HTTPFS_CLEANUP;
+        writel_msg("\nhttpfs_getattr(path=\"%s\", statbuf=0x%08x)\n",path, stbuf);
+        writel_stat(stbuf);
         HTTPFS_RETURN( 0 );
     }
 }
