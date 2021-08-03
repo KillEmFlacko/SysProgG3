@@ -30,6 +30,8 @@ OBJS = $(patsubst %.c,%.o,$(SRCS))
 BUILD_DIR = $(BUILD)/$(MODULE_NAME)
 BIN_DIR = $(BUILD_DIR)/bin
 
+CFLAGS += -DKEY_FILE=\"$(BUILD_DIR)/tmp.key\"
+
 # Genero le path assolute degli object file e dell'eseguibile
 OBJS_ABSPATH = $(addprefix $(BUILD_DIR)/,$(OBJS))
 EXECS_ABSPATH = $(addprefix $(BIN_DIR)/,$(EXECS))
@@ -41,7 +43,7 @@ INCLUDE_REL = $(shell realpath --relative-to . $(INCLUDE))
 
 .PHONY: all clean
 
-all: $(EXECS_ABSPATH)
+all: $(BUILD_DIR)/tmp.key $(EXECS_ABSPATH)
 
 depend:
 	makedepend -I $(INCLUDE_REL) $(SRCS) -Y /usr/include
@@ -59,13 +61,17 @@ $(BIN_DIR)/dining_philosophers : $(BUILD_DIR)/dining_philosophers.o $(DEPS_ABSPA
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -pthread -o $@ $^
 
-$(BIN_DIR)/lamport : $(BUILD_DIR)/main_lamport.o $(DEPS_ABSPATH)
+$(BIN_DIR)/lamport : $(BUILD_DIR)/main_lamport.o $(BUILD_DIR)/lamport.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 
 # Gestione delle dipendenze
 $(DEPS_ABSPATH):
 	$(MAKE) -C $(patsubst $(BUILD)%,$(SRC)%,$(@D)) $@
+
+$(BUILD_DIR)/tmp.key:
+	-mkdir -p $(dir $@)
+	echo "Ciccio" > $@
 
 # Recipe per gli object files
 $(BUILD)/$(MODULE_NAME)/%.o: %.c $(MY_INCLUDES)

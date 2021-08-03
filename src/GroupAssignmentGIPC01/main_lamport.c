@@ -28,14 +28,27 @@
  * along with SysProgG3.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/ipc.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 #include "GroupAssignmentGIPC01/lamport.h"
 
+Lamport_TypeDef* lamport = NULL;
+
+void exit_procedure(void)
+{
+	if(lamport != NULL)Lamport_remove(lamport);
+}
+
 int main(int argc, char **argv)
 {
+	atexit(exit_procedure);
+
 	if(argc < 2)
 	{
 		fprintf(stderr,"Usage:\n\t%s [number_of_procs]\n",argv[0]);
@@ -44,17 +57,46 @@ int main(int argc, char **argv)
 
 	int nprocs = atoi(argv[1]);
 
+	key_t key = ftok(KEY_FILE,1);
 	int act_id;
 	pid_t child_pid;
-	for(act_id = 0; (child_pid = fork()) != 0 && act_id < nprocs; act_id++);
+	int usleep_times[nprocs];
+	srand(time(NULL));
+	for(act_id = 0; act_id < nprocs; act_id++)
+	{
+		usleep_times[act_id] = (1 + rand() % 1000) * 1000;
+		if((child_pid = fork()) == 0) break;
+	}
 
 	if(child_pid == 0)
 	{
-		char string_id[128];
-		snprintf(string_id,128,"%d",act_id);
-		// TODO: path to executable to be fixed or direclty write the child task...
-		execl("path/to/exec","lamport",string_id,(char*)NULL);
-		exit(EXIT_FAILURE);
+		/*
+		 * Child process
+		 */
+
+		lamport = (Lamport_TypeDef*)malloc(sizeof(Lamport_TypeDef));
+
+		Lamport_init(&key,nprocs,act_id,lamport);
+		usleep(usleep_times[act_id]);
+
+		/*
+		 * Enter critical section
+		 */
+		Lamport_lock(lamport);
+
+		write(STDOUT_FILENO,"CRITICAL ", strlen("CRITICAL "));
+		usleep(usleep_times[act_id]/11);
+		write(STDOUT_FILENO,"SECTION ", strlen("SECTION "));
+		usleep(usleep_times[act_id]/11);
+		char string[32];
+		snprintf(string,32,"- ID %d\n",act_id);
+		write(STDOUT_FILENO,string,strlen(string));
+
+		usleep(usleep_times[act_id]);
+
+		Lamport_unlock(lamport);
+
+		exit(EXIT_SUCCESS);
 	}
 
 	for(int i = 0; i<nprocs ;i++)

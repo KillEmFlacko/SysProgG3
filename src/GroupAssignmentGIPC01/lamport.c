@@ -107,7 +107,7 @@ int Lamport_lock(Lamport_TypeDef *lamport)
 	 * Now we have to find out if we are the next customer
 	 * to be served in the queue
 	 */
-	for (int j = 0; j <= lamport->num_procs ; j++)
+	for (int j = 0; j < lamport->num_procs ; j++)
 	{
 		/*
 		 * No need to manage sched_yield errors,
