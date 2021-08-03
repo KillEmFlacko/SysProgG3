@@ -34,72 +34,48 @@
 #include "CommonAssignmentIPC02/array.h"
 #include "CommonAssignmentIPC01/libsp.h"
 
-#define NCOND 2
-#define COND_NEWRES 0
-#define COND_HASCONSUMED 1
-
-Monitor *monitor = NULL;
 Array_TypeDef *array = NULL;
 
 void exit_procedure(void)
 {
 	putchar('\n');
-	if(array != NULL)
-	{
-		if(Array_remove(array))
-		{
-			remove_monitor(monitor);
-		}
-	}
+	if(array != NULL) Array_remove(array);
 }
 
 /*
- * One producer and one consumer, one variable in shared memory
+ * Multiple producers and multiple consumers, consumers can consume only what has been produced
+ * while they were registered
  */
 int main(int argc, char **argv)
 {
 	atexit(exit_procedure);
 
-	if(argc < 3)
+	if(argc < 2)
 	{
-		fprintf(stderr,"Usage:\t%s num_res num_cons\n",argv[0]);
+		fprintf(stderr,"Usage:\t%s num_res\n",argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
 	int nres = atoi(argv[1]);
-	int ncons = atoi(argv[2]);
 
 	key_t key_monitor = ftok(KEY_FILE,1);
 	key_t key_array = ftok(KEY_FILE,2);
 
 	/*
-	 * Create monitor
-	 */
-	if((monitor = init_monitor(&key_monitor,NCOND)) == NULL)
-	{
-		fprintf(stderr,"Cannot get monitor\n");
-		exit(EXIT_FAILURE);
-	}
-
-	enter_monitor(monitor);
-
-	/*
 	 * Create array
 	 */
-	int my_array_id;
-	if((array = Array_init(&key_array,nres,ncons,&my_array_id)) == NULL)
+	if((array = Array_init(&key_monitor,&key_array,nres,1)) == NULL)
 	{
 		fprintf(stderr,"Cannot get array\n");
 		exit(EXIT_FAILURE);
 	}
-
-	leave_monitor(monitor);
 
 	/*
 	 * Wait for user input to consume
 	 */
 	char c;
 	int res;
+	int value = 0;
 
 	printf("Press a key to consume (Ctrl-D to exit)");
 	while((c = getchar()) != EOF)
@@ -112,37 +88,15 @@ int main(int argc, char **argv)
 			scanf("%d",&res);
 			getchar();
 		}
-		while(!(res >= 0 && res < array->array_len));
+		while(!(res >= 0 && res < Array_getLen(array)));
 
-		enter_monitor(monitor);
-
-		/*
-		 * white while value is not dirty
-		 */
-		while(array->bitmap[my_array_id][res] == 0)
+		if(Array_consume(array,res,&value) == -1)
 		{
-			if(wait_cond(monitor,COND_NEWRES) == -1)
-			{
-				fprintf(stderr, "Cannot wait on condition\n");
-				exit(EXIT_FAILURE);
-			}
-		}
-
-		printf("Consumed value: %d\n",array->array[res]);
-
-		/*
-		 * Unset your dirty bit in order to allow new value from
-		 * the producers
-		 */
-		Array_unsetDirty(array,res,my_array_id);
-
-		if(broadcast_cond(monitor,COND_HASCONSUMED) == -1)
-		{
-			fprintf(stderr, "Cannot signal on condition\n");
+			fprintf(stderr, "Cannot consume value\n");
 			exit(EXIT_FAILURE);
 		}
 
-		leave_monitor(monitor);
+		printf("Consumed value: %d\n",value);
 
 		printf("Press a key to consume (Ctrl-D to exit)");
 	}

@@ -36,9 +36,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
 #include "CommonAssignmentIPC01/libsp.h"
 #include "CommonAssignmentIPC02/array.h"
 
+#define NCOND 2
+#define COND_NEWRES 0
+#define COND_HASCONSUMED 1
 #define ERRMSG_MAX_LEN 128
 
 /**
@@ -46,35 +50,42 @@
  *
  * @param key pointer to the key used for creating the shared memory area
  * @param len length of the array
- * @param n_consumers number of consumers that will use the array
- * @param id pointer to the memory area where to store consumer id (set to NULL for producer)
+ * @param is_consumer signals if the process behave as a consumer or producer
  * @retval pointer to the shared Array structure
  */
-Array_TypeDef* Array_init(key_t *key,int len, int n_consumers, int *id)
+Array_TypeDef* Array_init(key_t *key_mon, key_t *key_shm,int len, int is_consumer)
 {
 	char error_string[ERRMSG_MAX_LEN];
 
+	/*
+	 * Check if array length is valid
+	 */
 	if(len > MAX_ARRAY_LEN)
 	{
-		snprintf(error_string,ERRMSG_MAX_LEN,"Array_init(key: %p, len: %d, n_consumers: %d) - Array too long",key,len,n_consumers);
+		snprintf(error_string,ERRMSG_MAX_LEN,"Array_init(key_mon: %p, key_shm: %p, len: %d, is_consumer: %d) - Array too long",key_mon,key_shm,len,is_consumer);
 		perror(error_string);
 		return NULL;
 	}
 
-	if(n_consumers > MAX_CONSUMERS)
+	/*
+	 * get the monitor data structure before working on the array
+	 */
+	Monitor *mon;
+	if((mon = init_monitor(key_mon,NCOND)) == NULL)
 	{
-		snprintf(error_string,ERRMSG_MAX_LEN,"Array_init(key: %p, len: %d, n_consumers: %d) - Too much consumers",key,len,n_consumers);
+		snprintf(error_string,ERRMSG_MAX_LEN,"Array_init(key_mon: %p, key_shm: %p, len: %d, is_consumer: %d) - Cannot get monitor",key_mon,key_shm,len,is_consumer);
 		perror(error_string);
 		return NULL;
 	}
+
+	enter_monitor(mon);
 
 	int shm_id;
 	int created = 0;
-	Array_TypeDef *array;
-
-	if((shm_id = get_shm(key,(char**)&array,sizeof(Array_TypeDef),&created)) == -1)
+	struct _Array_Bitmap *array;
+	if((shm_id = get_shm(key_shm,(char**)&array,sizeof(struct _Array_Bitmap),&created)) == -1)
 	{
-		snprintf(error_string,ERRMSG_MAX_LEN,"Array_init(key: %p, len: %d, n_consumers: %d) - Cannot create shared memory",key,len,n_consumers);
+		snprintf(error_string,ERRMSG_MAX_LEN,"Array_init(key_mon: %p, key_shm: %p, len: %d, is_consumer: %d) - Cannot get shared memory area",key_mon,key_shm,len,is_consumer);
 		perror(error_string);
 		return NULL;
 	}
@@ -85,57 +96,61 @@ Array_TypeDef* Array_init(key_t *key,int len, int n_consumers, int *id)
 	 */
 	if(created)
 	{
-		array->cons_id = 0;
 		array->counter = 0;
-		for(int j = 0; j < n_consumers; j++)
-			for(int i = 0; i < len; i++)
-				array->bitmap[j][i] = 0;
+
+		for( int i = 0 ; i < MAX_CONSUMERS; i++)
+			array->used_ids[i] = 0;
+
+		array->n_consumers = 0;
+
+		array->array_len = len;
 	}
 
 	/*
-	 * If i'm a producer i don't need an ID
+	 * If I'm a producer I don't need an ID
 	 */
-	if(id != NULL)
+	int consumer_id = -1;
+	if(is_consumer)
 	{
-		if(array->cons_id == array->n_consumers)
+		if(array->n_consumers >= MAX_CONSUMERS)
 		{
 			remove_shm(shm_id);
-			fprintf(stderr,"Array_init(key: %p, len: %d, n_consumers: %d) - Too much consumers\n",key,len,n_consumers);
+			fprintf(stderr,"Array_init(key_mon: %p, key_shm: %p, len: %d, is_consumer: %d) - Too much consumers\n",key_mon,key_shm,len,is_consumer);
 			return NULL;
 		}
-		*id = array->cons_id++;
+
+		array->n_consumers++;
+
+		/*
+		 * Get the first avaliable consumer ID
+		 */
+		for(consumer_id = 0; consumer_id < array->n_consumers  && array->used_ids[consumer_id] != 0 ; consumer_id++);
+
+		array->used_ids[consumer_id] = 1;
+
+		/*
+		 * Initialize your bitmap
+		 */
+		for(int i = 0; i < array->array_len; i++)
+		{
+			array->bitmap[consumer_id][i] = 0;
+		}
 	}
 
-	array->array_len = len;
-	array->n_consumers = n_consumers;
-	array->shm_id = shm_id;
+	/*
+	 * Counter of the processes using the array
+	 */
 	array->counter++;
 
-	return array;
-}
+	Array_TypeDef *data = (Array_TypeDef*)malloc(sizeof(Array_TypeDef));
+	data->mon = mon;
+	data->array = array;
+	data->shm_id = shm_id;
+	data->consumer_id = consumer_id;
 
-/**
- * @brief Set an array location as dirty (ready to be consumed) for a consumer
- *
- * @param array array to set the dirty bit to
- * @param index index of the newly produced element
- * @param id consumer id to which the value is new
- */
-void Array_setDirty(Array_TypeDef* array, int index, int id)
-{
-	array->bitmap[id][index] = 1;
-}
+	leave_monitor(mon);
 
-/**
- * @brief Set an array location as not dirty (already consumed) for a consumer
- *
- * @param array array to unset the dirty bit to
- * @param index index of the consumed element
- * @param id consumer id
- */
-void Array_unsetDirty(Array_TypeDef* array, int index, int id)
-{
-	array->bitmap[id][index] = 0;
+	return data;
 }
 
 /**
@@ -145,12 +160,158 @@ void Array_unsetDirty(Array_TypeDef* array, int index, int id)
  * @param index index of the element
  * @retval 1 if dirty, 0 otherwise
  */
-int Array_isDirty(Array_TypeDef *array, int index)
+int _Array_isDirty(Array_TypeDef *array, int index)
 {
-	for(int i = 0; i < array->n_consumers; i++)
+	for(int i = 0; i < MAX_CONSUMERS; i++)
 	{
-		if(array->bitmap[i][index] == 1) return 1;
+		/*
+		 * If the ID is used and the dirty bit is on then return 1
+		 */
+		if(array->array->used_ids[i] != 0 &&  array->array->bitmap[i][index] == 1) return 1;
 	}
+	return 0;
+}
+
+/**
+ * @brief Consume a resource from the array
+ *
+ * @param array Array handle data structure
+ * @param index index of the resource to be consumed
+ * @param value pointer to the consumed value area
+ * @retval 0 if all Ok, -1 otherwise
+ */
+int Array_consume(Array_TypeDef *array, int index, int *value)
+{
+	enter_monitor(array->mon);
+
+	/*
+	 * Check if the calling process is a consumer or a producer
+	 */
+	if(array->consumer_id == -1)
+	{
+		fprintf(stderr,"Array_consume(array:%p, index: %d, value: %p) - Cannot consume, producer process\n", array, index, value);
+		leave_monitor(array->mon);
+		return -1;
+	}
+
+	/*
+	 * Check id index is valid
+	 */
+	if(index >= array->array->array_len || index < 0)
+	{
+		fprintf(stderr,"Array_consume(array:%p, index: %d, value: %p) - Index out of bound\n", array, index, value);
+		return -1;
+	}
+
+	/*
+	 * Wait until value at index is dirty
+	 */
+	while(array->array->bitmap[array->consumer_id][index] == 0)
+	{
+		if(wait_cond(array->mon,COND_NEWRES) == -1)
+		{
+			fprintf(stderr,"Array_consume(array:%p, index: %d, value: %p) - Cannot wait on new data condition\n", array, index, value);
+			leave_monitor(array->mon);
+			return -1;
+		}
+	}
+
+	/*
+	 * Consume the value
+	 */
+	*value = array->array->array[index];
+
+	/*
+	 * Clear the dirty bit
+	 */
+	array->array->bitmap[array->consumer_id][index] = 0;
+
+
+	/*
+	 * Signal that a value has been consumed
+	 */
+	if(broadcast_cond(array->mon,COND_HASCONSUMED) == -1)
+	{
+		fprintf(stderr,"Array_consume(array:%p, index: %d, value: %p) - Cannot signal on consumed data condition\n", array, index, value);
+		leave_monitor(array->mon);
+		return -1;
+	}
+
+	leave_monitor(array->mon);
+	return 0;
+}
+
+/**
+ * @brief Produce a resource in the array
+ *
+ * @param array Array handle data structure
+ * @param index index of the resource to be produces
+ * @param value value to produce
+ * @retval 0 if all Ok, -1 otherwise
+ */
+int Array_produce(Array_TypeDef *array, int index, int value)
+{
+	enter_monitor(array->mon);
+
+	/*
+	 * Check if the calling process is a consumer or a producer
+	 */
+	if(array->consumer_id != -1)
+	{
+		fprintf(stderr,"Array_produce(array:%p, index: %d, value: %d) - Cannot produce, consumer process\n", array, index, value);
+		leave_monitor(array->mon);
+		return -1;
+	}
+
+	/*
+	 * Check id index is valid
+	 */
+	if(index >= array->array->array_len || index < 0)
+	{
+		fprintf(stderr,"Array_produce(array:%p, index: %d, value: %d) - Index out of bound\n", array, index, value);
+		leave_monitor(array->mon);
+		return -1;
+	}
+
+	/*
+	 * Wait until value at index is clear
+	 */
+	while(_Array_isDirty(array,index))
+	{
+		if(wait_cond(array->mon,COND_HASCONSUMED) == -1)
+		{
+			fprintf(stderr,"Array_produce(array:%p, index: %d, value: %d) - Cannot wait on consumed data condition\n", array, index, value);
+			leave_monitor(array->mon);
+			return -1;
+		}
+	}
+
+	/*
+	 * Produce the value
+	 */
+	array->array->array[index] = value;
+
+	/*
+	 * Set all dirty bits
+	 */
+	for(int i = 0; i < MAX_CONSUMERS; i++)
+	{
+		if(array->array->used_ids[i] != 0)
+			array->array->bitmap[i][index] = 1;
+	}
+
+
+	/*
+	 * Signal that a value has been produced
+	 */
+	if(broadcast_cond(array->mon,COND_NEWRES) == -1)
+	{
+		fprintf(stderr,"Array_consume(array:%p, index: %d, value: %d) - Cannot signal on new data condition\n", array, index, value);
+		leave_monitor(array->mon);
+		return -1;
+	}
+
+	leave_monitor(array->mon);
 	return 0;
 }
 
@@ -158,12 +319,45 @@ int Array_isDirty(Array_TypeDef *array, int index)
  * @brief Remove the array and all the structures attached to it
  *
  * @param array the array to remove
- * @retval 0 if no other process is using the array 
  */
-int Array_remove(Array_TypeDef* array)
+void Array_remove(Array_TypeDef* array)
 {
-	array->counter--;
-	int cnt = array->counter;
+	enter_monitor(array->mon);
+
+	array->array->counter--;
+	int cnt = array->array->counter;
+	if(array->consumer_id >= 0) {
+		array->array->used_ids[array->consumer_id] = 0;
+		array->array->n_consumers--;
+	}
+
+	/*
+	 * Signal that a value has been consumed in order
+	 * to allow producers to read bitmap
+	 */
+	if(broadcast_cond(array->mon,COND_HASCONSUMED) == -1)
+	{
+		fprintf(stderr,"Array_remove(array:%p) - Cannot signal on consumed data condition\n", array);
+	}
+	leave_monitor(array->mon);
+
 	remove_shm(array->shm_id);
-	return cnt == 0;
+	if(cnt == 0)
+		remove_monitor(array->mon);
+
+	free(array);
+}
+
+/**
+ * @brief Get the array length
+ *
+ * @param array pointer to Array handle data structure
+ * @retval array length
+ */
+int Array_getLen(Array_TypeDef* array)
+{
+	enter_monitor(array->mon);
+	int len = array->array->array_len;
+	leave_monitor(array->mon);
+	return len;
 }

@@ -36,35 +36,50 @@
 #ifndef _H_IPC02ARRAY
 #define _H_IPC02ARRAY
 
+#include "CommonAssignmentIPC01/libsp.h"
 #include <sys/types.h>
 
 #define MAX_ARRAY_LEN 256
 #define MAX_CONSUMERS 256
 
 /**
- * @brief Array data structure
+ * @brief Array and bitmap data structure
  */
-struct Array_Struct
+struct _Array_Bitmap
 {
-	int shm_id; /**< shared memory ID where this data structure is located */
-	int cons_id; /**< next consumer ID */
 	int array[MAX_ARRAY_LEN]; /**< actual array */
 	int array_len; /**< number of elements used in the array */
 	int bitmap[MAX_CONSUMERS][MAX_ARRAY_LEN]; /**< status bitmap of the array */
 	int n_consumers; /**< number of consumers using the array */
+	int used_ids[MAX_CONSUMERS];
 	int counter; /**< number of processes using the data structure */
+};
+
+/**
+ * @brief Array handle data structure
+ */
+struct Array_Struct
+{
+	Monitor *mon; /**< Monitor for handling mutual exclusion */
+
+	int shm_id; /**< ID of the shared memory area of internal array */
+	struct _Array_Bitmap *array; /**< actual shared array structure */
+
+	int consumer_id; /**< ID of the consumer, -1 if the process is a producer */
 };
 
 typedef struct Array_Struct Array_TypeDef;
 
-Array_TypeDef* Array_init(key_t *key,int len, int n_consumers, int *id);
+Array_TypeDef* Array_init(key_t *key_mon, key_t *key_shm,int len, int is_consumer);
 
-void Array_setDirty(Array_TypeDef* array, int index, int id);
+int Array_consume(Array_TypeDef *array, int index, int *value);
 
-void Array_unsetDirty(Array_TypeDef* array, int index, int id);
+int Array_produce(Array_TypeDef *array, int index, int value);
 
-int Array_isDirty(Array_TypeDef *array, int index);
+int _Array_isDirty(Array_TypeDef *array, int index);
 
-int Array_remove(Array_TypeDef* array);
+void Array_remove(Array_TypeDef* array);
+
+int Array_getLen(Array_TypeDef* array);
 
 #endif /* ifndef _H_IPC02ARRAY */

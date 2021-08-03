@@ -34,23 +34,12 @@
 #include "CommonAssignmentIPC02/array.h"
 #include "CommonAssignmentIPC01/libsp.h"
 
-#define NCOND 2
-#define COND_NEWRES 0
-#define COND_HASCONSUMED 1
-
-Monitor *monitor = NULL;
 Array_TypeDef *array = NULL;
 
 void exit_procedure(void)
 {
 	putchar('\n');
-	if(array != NULL)
-	{
-		if(Array_remove(array))
-		{
-			remove_monitor(monitor);
-		}
-	}
+	if(array != NULL) Array_remove(array);
 }
 
 /*
@@ -60,45 +49,32 @@ int main(int argc, char **argv)
 {
 	atexit(exit_procedure);
 
-	if(argc < 3)
+	if(argc < 2)
 	{
-		fprintf(stderr,"Usage:\t%s num_res num_cons\n",argv[0]);
+		fprintf(stderr,"Usage:\t%s num_res\n",argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
 	int nres = atoi(argv[1]);
-	int ncons = atoi(argv[2]);
 
 	key_t key_monitor = ftok(KEY_FILE,1);
 	key_t key_array = ftok(KEY_FILE,2);
 
 	/*
-	 * Create monitor
-	 */
-	if((monitor = init_monitor(&key_monitor,NCOND)) == NULL)
-	{
-		fprintf(stderr,"Cannot get monitor\n");
-		exit(EXIT_FAILURE);
-	}
-
-	enter_monitor(monitor);
-
-	/*
 	 * Create array
 	 */
-	if((array = Array_init(&key_array,nres,ncons,NULL)) == NULL)
+	if((array = Array_init(&key_monitor,&key_array,nres,0)) == NULL)
 	{
 		fprintf(stderr,"Cannot get array\n");
 		exit(EXIT_FAILURE);
 	}
-
-	leave_monitor(monitor);
 
 	/*
 	 * Wait for user input to produce
 	 */
 	char c;
 	int res;
+	int value;
 	srand(time(NULL));
 	printf("Press a key to produce (Ctrl-D to exit)");
 	while((c = getchar()) != EOF)
@@ -111,47 +87,15 @@ int main(int argc, char **argv)
 			scanf("%d",&res);
 			getchar();
 		}
-		while(!(res >= 0 && res < array->array_len));
+		while(!(res >= 0 && res < Array_getLen(array)));
 
-		enter_monitor(monitor);
-
-		/*
-		 * wait until all the consumers have consumed
-		 */
-		while(Array_isDirty(array,res))
+		value = rand();
+		if(Array_produce(array,res,value) == -1)
 		{
-			if(wait_cond(monitor,COND_HASCONSUMED) == -1)
-			{
-				fprintf(stderr, "Cannot wait on condition\n");
-				exit(EXIT_FAILURE);
-			}
-		}
-
-		/*
-		 * Produce the resource
-		 */
-		array->array[res] = rand();
-		printf("Produced value: %d\n",array->array[res]);
-
-		/*
-		 * Set all the dirty bits of the produced value
-		 */
-		for(int i = 0; i < array->n_consumers; i++)
-		{
-			Array_setDirty(array,res,i);
-		}
-
-		/*
-		 * Signal to all the waiting processes that new values are
-		 * avaliable
-		 */
-		if(broadcast_cond(monitor,COND_NEWRES) == -1)
-		{
-			fprintf(stderr, "Cannot signal on condition\n");
+			fprintf(stderr, "Cannot produce value\n");
 			exit(EXIT_FAILURE);
 		}
-
-		leave_monitor(monitor);
+		printf("Produced value: %d\n",value);
 
 		printf("Press a key to produce (Ctrl-D to exit)");
 	}
