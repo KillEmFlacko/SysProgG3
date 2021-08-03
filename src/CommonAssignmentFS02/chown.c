@@ -6,11 +6,6 @@ int httpfs_chown( const char *path ,
                   gid_t gid )
 {
 
-    char fpath[PATH_MAX];
-    writel_msg("\nhttpfs_chown(path=\"%s\", uid=%d, gid=%d)\n", path, uid, gid);
-    hpfs_fullpath(fpath, path);
-    writel_syscall("chown", chown(fpath, uid, gid), 0);
-
     struct
     {
         uint32_t uid;
@@ -23,6 +18,8 @@ int httpfs_chown( const char *path ,
     {
         HTTPFS_CHECK_RESPONSE_STATUS;
         HTTPFS_CLEANUP;
+        writel_msg("\nhttpfs_chown(path=\"%s\", uid=%d, gid=%d)\n", path, uid, gid);
         HTTPFS_RETURN( 0 );
+        
     }
 }

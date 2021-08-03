@@ -54,7 +54,7 @@ int httpfs_fuse_start( struct httpfs *httpfs ,
 
     httpfs->url = url;
     httpfs->remote_chroot = remote_chroot;
-    httpfs->mount_point = mount_point;
+    httpfs->mount_point = realpath(mount_point, NULL);
     httpfs->logfile = writel_open(); // log file creation
 
 
