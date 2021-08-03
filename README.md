@@ -56,8 +56,7 @@ Before running the 2 executables for FIFO, make sure you are into the mount poin
 - open the log file dnfs.log available in `build/CommonAssignmentFS02/` and see the log report
 
 ### How to gerate the documentation
-- $make doc
-to generate the html documentation with doxygen
+- `$ make doc`to generate the html documentation with doxygen
 
 ## Group Assignment GIPC01
 
