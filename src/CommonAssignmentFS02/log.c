@@ -1,6 +1,3 @@
-
-#include "CommonAssignmentFS02/p.h"
-
 #include <errno.h>
 #include <fuse.h>
 #include <stdarg.h>
@@ -12,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "CommonAssignmentFS02/httpfs.h"
 #include "CommonAssignmentFS02/log.h"
 
 FILE *writel_open()
@@ -35,7 +33,7 @@ void writel_msg(const char *format, ...)
     va_list ap;
     va_start(ap, format);
 
-    vfprintf(DNFS_DATA->logfile, format, ap);
+    vfprintf(HTTPFS_DATA->logfile, format, ap);
 }
 
 // Report errors to logfile and give -errno to caller

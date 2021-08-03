@@ -45,9 +45,9 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include "log.h"
-#include "p.h"
 #include <unistd.h>
 
+#define HTTPFS_DATA ((struct httpfs *) fuse_get_context()->private_data)
 
 void hpfs_fullpath(char fpath[PATH_MAX], const char *path);
 

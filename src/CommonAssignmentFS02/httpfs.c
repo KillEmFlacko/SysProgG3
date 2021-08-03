@@ -6,11 +6,11 @@
 //  filesystem.  paths have to be completed by mountpoint
 void hpfs_fullpath(char fpath[PATH_MAX], const char *path)
 {
-    strcpy(fpath, DNFS_DATA->mount_point);
+    strcpy(fpath, HTTPFS_DATA->mount_point);
     strncat(fpath, path, PATH_MAX); // truncates long paths
 
     writel_msg("    httpfs_fullpath:  rootdir = \"%s\", path = \"%s\", fpath = \"%s\"\n",
-	    DNFS_DATA->mount_point, path, fpath);
+	    HTTPFS_DATA->mount_point, path, fpath);
 }
 
 const char *HTTPFS_OPCODE_NAMES[] = {
