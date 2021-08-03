@@ -28,11 +28,6 @@
  * along with SysProgG3.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
-  @file main_prod.c
-  @brief Performs the producer in the producer/consumer problem synchronized with only semaphores in the case that the shared resource is an integer variable in a shared memory
-  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>

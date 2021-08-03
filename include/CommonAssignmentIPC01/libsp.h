@@ -28,7 +28,10 @@
  * along with SysProgG3.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @file libsp.h */
+/**
+ * @file libsp.h
+ * @brief Library header for CommonAssignmentIPC01 library
+ */
 
 #ifndef _LIBSP_H
 #define _LIBSP_H

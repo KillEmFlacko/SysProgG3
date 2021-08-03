@@ -28,6 +28,11 @@
  * along with SysProgG3.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file array.h
+ * @brief Library header for array handling in producer-consumer problem
+ */
+
 #ifndef _H_IPC02ARRAY
 #define _H_IPC02ARRAY
 
@@ -36,15 +41,18 @@
 #define MAX_ARRAY_LEN 256
 #define MAX_CONSUMERS 256
 
+/**
+ * @brief Array data structure
+ */
 struct Array_Struct
 {
-	int shm_id;
-	int cons_id;
-	int array[MAX_ARRAY_LEN];
-	int array_len;
-	int bitmap[MAX_CONSUMERS][MAX_ARRAY_LEN];
-	int n_consumers;
-	int counter;
+	int shm_id; /**< shared memory ID where this data structure is located */
+	int cons_id; /**< next consumer ID */
+	int array[MAX_ARRAY_LEN]; /**< actual array */
+	int array_len; /**< number of elements used in the array */
+	int bitmap[MAX_CONSUMERS][MAX_ARRAY_LEN]; /**< status bitmap of the array */
+	int n_consumers; /**< number of consumers using the array */
+	int counter; /**< number of processes using the data structure */
 };
 
 typedef struct Array_Struct Array_TypeDef;
@@ -59,4 +67,4 @@ int Array_isDirty(Array_TypeDef *array, int index);
 
 int Array_remove(Array_TypeDef* array);
 
-#endif
+#endif /* ifndef _H_IPC02ARRAY */

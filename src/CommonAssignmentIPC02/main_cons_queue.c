@@ -28,11 +28,6 @@
  * along with SysProgG3.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
-  @file main_cons_queue.c
-  @brief Performs the consumer in the producer/consumer problem synchronized with monitor in the case that the shared resource is a queue in a shared memory
-  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ipc.h>

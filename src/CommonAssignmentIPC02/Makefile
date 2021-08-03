@@ -130,11 +130,15 @@ file.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_cons_array.o: ../../include/CommonAssignmentIPC02/array.h
 main_cons_array.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_cons.o: ../../include/CommonAssignmentIPC01/libsp.h
+main_cons_file.o: ../../include/CommonAssignmentIPC01/libsp.h
+main_cons_file.o: ../../include/CommonAssignmentIPC02/file.h
 main_cons_queue.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_cons_queue.o: ../../include/lib/queue.h
 main_prod_array.o: ../../include/CommonAssignmentIPC02/array.h
 main_prod_array.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_prod.o: ../../include/CommonAssignmentIPC01/libsp.h
+main_prod_file.o: ../../include/CommonAssignmentIPC01/libsp.h
+main_prod_file.o: ../../include/CommonAssignmentIPC02/file.h
 main_prod_queue.o: ../../include/CommonAssignmentIPC01/libsp.h
 main_prod_queue.o: ../../include/lib/queue.h
 readwrite_array.o: ../../include/CommonAssignmentIPC01/libsp.h
