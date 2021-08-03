@@ -34,7 +34,7 @@ Repository contenente tutti gli assignment del gruppo 3 per il corso di System P
 
 ### How to run
 This assignment has different source codes, we don’t provide a single executable to do all, so the following steps are required to test the calls reported above:
-- make to build all
+- `$ make` to build all
 - from the root of the project run `$ ./build/CommonAssignmentFS01/bin/dnfs build/CommonAssignmentFS01/fs/rootDir build/CommonAssignmentFS01/fs/mountPoint` to create the necessary directories, to move executables into the root dir of the file system to mount, to mount the FUSE file system and to generate the `dnfs.log` file where we can read the calls
 - open the log file into `data/dnfs.log`
 - run always from the root of the project the executables into the mountPoint directory (`./build/CommonAssignmentFS01/fs/mountPoint/random_chars` or `write_char_by_char` or `write_line_by_line` or `fifo_sendmsg` or `fifo_rcvmsg`) or run commands from the shell into the mountPoint directory and see the calls into the log file. 
