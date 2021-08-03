@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sched.h>
+#include "lib/lib.h"
 #include "GroupAssignmentGIPC01/lamport.h"
 
 /**

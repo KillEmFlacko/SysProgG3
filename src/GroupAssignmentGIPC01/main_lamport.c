@@ -42,7 +42,7 @@ Lamport_TypeDef* lamport = NULL;
 
 void exit_procedure(void)
 {
-	if(lamport != NULL)Lamport_remove(lamport);
+	if(lamport != NULL) Lamport_remove(lamport);
 }
 
 int main(int argc, char **argv)
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 
 	if(argc < 2)
 	{
-		fprintf(stderr,"Usage:\n\t%s [number_of_procs]\n",argv[0]);
+		fprintf(stderr,"Usage:\n\t%s number_of_procs\n",argv[0]);
 		exit(EXIT_FAILURE);
 	}
 

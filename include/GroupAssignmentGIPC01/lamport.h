@@ -37,7 +37,6 @@
 #define LAMPORT_H
 
 #include <sys/types.h>
-#include "lib/lib.h"
 #include "CommonAssignmentIPC01/libsp.h"
 
 /**
