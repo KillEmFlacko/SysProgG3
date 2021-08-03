@@ -28,6 +28,11 @@
  * along with SysProgG3.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file file.c
+ * @brief Library for file handling in producer-consumer problem
+ */
+
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -142,6 +147,14 @@ IPC02_File_TypeDef* IPC02_File_init(key_t *key_mon, key_t *key_shm, const char* 
 	return file;
 }
 
+/**
+ * @brief Consume the next `nbyte` byte from the file
+ *
+ * @param file File data structure
+ * @param buf destination buffer
+ * @param nbyte number of byte to consume
+ * @retval number of byte read, -1 on error
+ */
 int IPC02_File_consume(IPC02_File_TypeDef *file, void* buf, size_t nbyte)
 {
 	char error_string[ERRMSG_MAX_LEN];
@@ -175,7 +188,8 @@ int IPC02_File_consume(IPC02_File_TypeDef *file, void* buf, size_t nbyte)
 	/*
 	 * Consume produced data
 	 */
-	if(read(file->fd,buf,nbyte) == -1)
+	int r;
+	if((r = read(file->fd,buf,nbyte)) == -1)
 	{
 		snprintf(error_string,ERRMSG_MAX_LEN,"IPC02_File_consume(file: %p, buf: %p, nbyte: %zu) - Error while reading file",file,buf,nbyte);
 		perror(error_string);
@@ -183,9 +197,17 @@ int IPC02_File_consume(IPC02_File_TypeDef *file, void* buf, size_t nbyte)
 	}
 
 	leave_monitor(file->mon);
-	return 0;
+	return r;
 }
 
+/**
+ * @brief Produce the next `nbyte` byte in the file
+ *
+ * @param file File data structure
+ * @param buf source buffer
+ * @param nbyte number of byte to produce
+ * @retval number of byte wrote, -1 on error
+ */
 int IPC02_File_produce(IPC02_File_TypeDef *file, void* buf, size_t nbyte)
 {
 	char error_string[ERRMSG_MAX_LEN];
@@ -216,9 +238,15 @@ int IPC02_File_produce(IPC02_File_TypeDef *file, void* buf, size_t nbyte)
 	}
 
 	leave_monitor(file->mon);
-	return 0;
+	return wrote_data;
 }
 
+/**
+ * @brief deallocate File data structure and its inner data structures
+ *
+ * @param file File data structure
+ * @retval 0 on success, -1 otherwise
+ */
 int IPC02_File_remove(IPC02_File_TypeDef* file)
 {
 	(*(file->counter))--;

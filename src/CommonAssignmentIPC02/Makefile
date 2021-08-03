@@ -1,5 +1,5 @@
 # Lista degli eseguibili da generare (vedi nelle recipe per la generazione)
-EXECS = producer consumer producer_array consumer_array producer_queue consumer_queue readwrite_file readwrite_queue readwrite_var readwrite_array
+EXECS = producer consumer producer_array consumer_array producer_queue consumer_queue producer_file consumer_file readwrite_file readwrite_queue readwrite_var readwrite_array
 LFLAGS += -pthread
 
 # Recupero il nome del modulo in analisi
@@ -78,6 +78,14 @@ $(BIN_DIR)/producer_queue : $(BUILD_DIR)/main_prod_queue.o $(DEPS_ABSPATH)
 	$(CC) $(LFLAGS) -o $@ $^
 
 $(BIN_DIR)/consumer_queue : $(BUILD_DIR)/main_cons_queue.o $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $^
+
+$(BIN_DIR)/producer_file : $(BUILD_DIR)/main_prod_file.o $(BUILD_DIR)/file.o $(DEPS_ABSPATH)
+	-mkdir -p $(dir $@)
+	$(CC) $(LFLAGS) -o $@ $^
+
+$(BIN_DIR)/consumer_file : $(BUILD_DIR)/main_cons_file.o $(BUILD_DIR)/file.o $(DEPS_ABSPATH)
 	-mkdir -p $(dir $@)
 	$(CC) $(LFLAGS) -o $@ $^
 

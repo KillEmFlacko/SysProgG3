@@ -28,6 +28,11 @@
  * along with SysProgG3.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file file.h
+ * @brief Library header for file handling in producer-consumer problem
+ */
+
 #ifndef _IPC02_FILE_H
 #define _IPC02_FILE_H
 
